@@ -10,9 +10,9 @@ const NotificationChannels = ({
   setIsEmailSelected,
 }) => {
   return (
-    <div className="mt-6">
+    <div className="">
       <label className="block text-sm font-medium text-gray-700 mb-3">
-        Notification Channel
+        Select your choice of media
       </label>
       <div className="flex gap-6">
         {/* WhatsApp Option */}

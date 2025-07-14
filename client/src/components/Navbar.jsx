@@ -49,13 +49,7 @@ const Navbar = () => {
                 { label: "Careers", href: "/about/careers" }
               ]}
             />
-            <NavDropdown
-              title="Pricing"
-              items={[
-                { label: "Enterprise", href: "/about/story" },
-                { label: "Team", href: "/about/team" },
-              ]}
-            />
+            <div>About</div>
           </div>
 
           {/* Center Section: Logo (order adjusted for mobile/desktop) */}

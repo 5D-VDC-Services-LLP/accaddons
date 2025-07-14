@@ -165,7 +165,7 @@ const getAutodeskProjectsInHub = async (apsAccessToken, hubId) => {
 const getAutodeskProjectUsers = async (apsAccessToken, projectId) => {
   let url = `https://developer.api.autodesk.com/construction/admin/v1/projects/${projectId}/users`;
   const params = {
-    fields: 'firstName,lastName,autodeskId,email,name', // Restrict response
+    fields: 'autodeskId,email,name,roles', // Restrict response
     limit: 100, // Increase limit to reduce pagination loops (max = 100)
   };
   const headers = {
@@ -454,7 +454,8 @@ const getAutodeskReviewWorkflows = async (apsAccessToken, projectId) => {
 
     return allWorkflows.map(wf => ({
       id: wf.id,
-      name: wf.name
+      name: wf.name,
+      steps: wf.steps,
     }));
   } catch (error) {
     console.error(

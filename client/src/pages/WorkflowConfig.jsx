@@ -27,14 +27,21 @@ const WorkflowConfig = () => {
   // States for WorkflowDetails component's search and selection
   const [searchUser, setSearchUser] = useState('');
   const [searchCompany, setSearchCompany] = useState('');
-  const [isUserActive, setIsUserActive] = useState(false);
+  const [searchRole, setSearchRole] = useState('');
+
   const [selectedUsers, setSelectedUsers] = useState([]); // Stores selected user objects
   const [selectedCompanies, setSelectedCompanies] = useState([]); // Stores selected company objects
+  const [selectedRoles, setSelectedRoles] = useState([]);
+
+  const [isUserActive, setIsUserActive] = useState(false);
   const [isCompanyActive, setIsCompanyActive] = useState(false);
+  const [isRoleActive, setIsRoleActive] = useState(false);
+
 
   // States for fetching dropdown data
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null); // State to handle fetch errors
   const [moduleFilters, setModuleFilters] = useState(null);
@@ -55,24 +62,30 @@ const WorkflowConfig = () => {
         setLoading(true);
         setError(null); // Clear previous errors
 
-        const [usersRes, companiesRes] = await Promise.all([
+        const [usersRes, companiesRes, rolesRes] = await Promise.all([
           fetch(`${getBackendUrl()}/api/autodesk/${projectId}/users`),
-          fetch(`${getBackendUrl()}/api/autodesk/${projectId}/company`)
+          fetch(`${getBackendUrl()}/api/autodesk/${projectId}/company`),
+
         ]);
 
         if (!usersRes.ok) throw new Error(`HTTP error! status: ${usersRes.status} for users`);
         if (!companiesRes.ok) throw new Error(`HTTP error! status: ${companiesRes.status} for companies`);
 
+
         const usersData = await usersRes.json();
         console.log(usersData)
         const companiesData = await companiesRes.json();
         console.log(companiesData)
+        const rolesData = usersData.data.roles;
+        console.log(rolesData)
 
         setUsers(usersData.data || []);
         setCompanies(companiesData.data || []);
+        setRoles(rolesData || []);
+
       } catch (err) {
         console.error("Error fetching dropdown data:", err);
-        setError("Failed to load user and company data. Please try again.");
+        setError("Failed to load user, company and role data. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -85,16 +98,38 @@ const WorkflowConfig = () => {
 
   useEffect(() => {
   if (moduleFilters && filters.length === 0) {
-    const filterOptions = Object.keys(moduleFilters);
-    const singleSelectFilters = ['Created On', 'Due Date', 'Status'];
-    const firstFilter = filterOptions[0];
-
+    let firstFilterBy = null;
+    let defaultAttribute = '';
+    if (moduleType === 'issues' && moduleFilters['Due Date']) {
+      firstFilterBy = 'Due Date';
+      // Select first attribute for Due Date
+      defaultAttribute = Array.isArray(moduleFilters['Due Date']) && moduleFilters['Due Date'][0]?.id
+        ? moduleFilters['Due Date'][0].id
+        : '';
+    } else if (moduleType === 'reviews' && moduleFilters['Next Step Due Date']) {
+      firstFilterBy = 'Next Step Due Date';
+      defaultAttribute = Array.isArray(moduleFilters['Next Step Due Date']) && moduleFilters['Next Step Due Date'][0]?.id
+        ? moduleFilters['Next Step Due Date'][0].id
+        : '';
+    } else if (moduleType === 'forms' && moduleFilters['Created On']) {
+      firstFilterBy = 'Created On';
+      defaultAttribute = Array.isArray(moduleFilters['Created On']) && moduleFilters['Created On'][0]?.id
+        ? moduleFilters['Created On'][0].id
+        : '';
+    } else {
+      // fallback to first available filter
+      firstFilterBy = Object.keys(moduleFilters)[0];
+      defaultAttribute = Array.isArray(moduleFilters[firstFilterBy]) && moduleFilters[firstFilterBy][0]?.id
+        ? moduleFilters[firstFilterBy][0].id
+        : '';
+    }
     setFilters([{
-      filterBy: firstFilter,
-      attribute: singleSelectFilters.includes(firstFilter) ? '' : [],
+      filterBy: firstFilterBy,
+      attribute: defaultAttribute,
+      isMandatory: true,
     }]);
   }
-}, [moduleFilters]);
+}, [moduleFilters, moduleType]);
 
 
   useEffect(() => {
@@ -121,7 +156,7 @@ const WorkflowConfig = () => {
         if (!res.ok) throw new Error(`Failed to fetch filters: ${res.status}`);
 
         const data = await res.json();
-        console.log(`Fetched filters for module "${moduleType}":`, data);
+        console.log(`Fetched filters for module "${moduleType}":`, data.data);
 
         setModuleFilters(data?.data || []);
       } catch (error) {
@@ -135,11 +170,9 @@ const WorkflowConfig = () => {
       fetchModuleFilters(); // runs only once if both values are set
     }
   }, [projectId, moduleType]);
+  console.log(getBackendUrl())
 
   console.log(moduleFilters)
-
-  const singleSelectFilters = ['Created On', 'Due Date', 'Status'];
-
 
   // Handlers for WorkflowFilter component
   const handleFilterChange = (index, field, value) => {
@@ -147,37 +180,42 @@ const WorkflowConfig = () => {
   };
 
   const addFilter = () => {
-  if (!moduleFilters) return; // Prevent errors if filters haven't loaded yet
-
+  if (!moduleFilters) return;
   const filterOptions = Object.keys(moduleFilters);
-  const singleSelectFilters = ['Created On', 'Due Date', 'Status'];
 
-  const remainingOptions = filterOptions.filter(
-    (opt) => !filters.some((f) => f.filterBy === opt)
-  );
+  // Exclude the mandatory filter from available options
+  const usedFilters = filters.map(f => f.filterBy);
+  const mandatoryFilter = filters[0]?.filterBy;
+  const remainingOptions = filterOptions.filter(opt => !usedFilters.includes(opt) && opt !== mandatoryFilter);
 
   if (remainingOptions.length > 0) {
     const nextFilterBy = remainingOptions[0];
     const newFilter = {
       filterBy: nextFilterBy,
-      attribute: singleSelectFilters.includes(nextFilterBy) ? '' : [],
+      attribute: '',
+      isMandatory: false,
     };
-    setFilters((prev) => [...prev, newFilter]);
+    setFilters(prev => [...prev, newFilter]);
   }
 };
 
 
 
   const handleDeleteFilter = (index) => {
-    setFilters((prev) => prev.filter((_, i) => i !== index));
-  };
+  if (index === 0) return; // Prevent deleting the mandatory filter
+  setFilters((prev) => prev.filter((_, i) => i !== index));
+};
 
   const resetFilters = () => {
   if (!moduleFilters) return;
-  const firstFilter = Object.keys(moduleFilters)[0];
+  const mandatoryFilter = filters[0]?.filterBy;
+  const defaultAttribute = Array.isArray(moduleFilters[mandatoryFilter]) && moduleFilters[mandatoryFilter][0]?.id
+    ? moduleFilters[mandatoryFilter][0].id
+    : '';
   setFilters([{
-    filterBy: firstFilter,
-    attribute: singleSelectFilters.includes(firstFilter) ? '' : [],
+    filterBy: mandatoryFilter,
+    attribute: defaultAttribute,
+    isMandatory: true,
   }]);
 };
 
@@ -301,26 +339,37 @@ const WorkflowConfig = () => {
           <WorkflowDetails
             title={title}
             setTitle={setTitle}
+
             isUserActive={isUserActive}
             setIsUserActive={setIsUserActive}
-            searchUser={searchUser}
-            setSearchUser={setSearchUser}
             isCompanyActive={isCompanyActive}
             setIsCompanyActive={setIsCompanyActive}
+            isRoleActive={isRoleActive}
+            setIsRoleActive={setIsRoleActive}
+
+            searchUser={searchUser}
+            setSearchUser={setSearchUser}
             searchCompany={searchCompany}
             setSearchCompany={setSearchCompany}
-            users={users}
+            searchRole={searchRole}
+            setSearchRole={setSearchRole}
+
+            users={users.users}
             companies={companies}
+            roles={roles}
+
             selectedUsers={selectedUsers}
             setSelectedUsers={setSelectedUsers}
             selectedCompanies={selectedCompanies}
             setSelectedCompanies={setSelectedCompanies}
+            selectedRoles={selectedRoles}
+            setSelectedRoles={setSelectedRoles}
           />
         </div>
 
         {/* Notification Channels Section */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Notification Channels</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-3">Notification Channels</h2>
           <NotificationChannels
             isWhatsAppSelected={isWhatsAppSelected}
             setIsWhatsAppSelected={setIsWhatsAppSelected}
@@ -329,27 +378,27 @@ const WorkflowConfig = () => {
           />
         </div>
 
-        {/* Filters and Schedule Section - Now below the above modules */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Filters Column */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Filters</h2>
-            <WorkflowFilter
-              filters={filters}
-              moduleFilters={moduleFilters}
-              handleFilterChange={handleFilterChange}
-              addFilter={addFilter}
-              handleDeleteFilter={handleDeleteFilter}
-              resetFilters={resetFilters}
-            />
-          </div>
+        <div className="flex flex-col lg:flex-row gap-8">
+  {/* Filters Section */}
+  <div className="bg-white flex-1 basis-2/3 lg:basis-3/4 p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
+    <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Filters</h2>
+    <WorkflowFilter
+      filters={filters}
+      moduleFilters={moduleFilters}
+      handleFilterChange={handleFilterChange}
+      addFilter={addFilter}
+      handleDeleteFilter={handleDeleteFilter}
+      resetFilters={resetFilters}
+    />
+  </div>
 
-          {/* Schedule Column */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Schedule</h2>
-            <WorkflowSchedule selectedDays={selectedDays} toggleDay={toggleDay} />
-          </div>
-        </div>
+  {/* Schedule Section */}
+  <div className="bg-white flex-1 basis-1/3 lg:basis-1/4 p-6 rounded-lg shadow-md max-h-[80vh]">
+    <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Schedule</h2>
+    <WorkflowSchedule selectedDays={selectedDays} toggleDay={toggleDay} />
+  </div>
+</div>
+
       </div>
     </div>
   );

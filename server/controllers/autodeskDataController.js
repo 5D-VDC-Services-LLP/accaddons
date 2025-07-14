@@ -190,13 +190,58 @@ const fetchProjectUsers = async (req, res, next) => {
     console.log(projectId)
 
     const users = await autodeskService.getAutodeskProjectUsers(accessToken, projectId);
-    res.json({ success: true, data: users });
+
+    // Extract unique roles
+    const uniqueRolesMap = new Map();
+
+    users.forEach(user => {
+      (user.roles || []).forEach(role => {
+        const key = `${role.roleGroupId}-${role.name}`;
+        if (!uniqueRolesMap.has(key)) {
+          uniqueRolesMap.set(key, {
+            roleGroupId: role.roleGroupId,
+            name: role.name
+          });
+        }
+      });
+    });
+
+    const roles = Array.from(uniqueRolesMap.values());
+
+    res.json({ success: true, data: { users, roles } });
   } catch (error) {
     next(error);
   }
 };
 
 const fetchProjectCompany = async (req, res, next) => {
+  try {
+    const { companyConfig } = req;
+
+    if (!companyConfig || !companyConfig.aps_client_id || !companyConfig.aps_client_secret) {
+      throw new CustomError(
+        'Tenant-specific Autodesk credentials not found. Please access via a valid tenant subdomain.',
+        400
+      );
+    }
+    const accessToken = await getValid2leggedApsAccessToken(companyConfig);
+    const { companyId } = req.params;
+
+    if (!companyId) {
+      throw new CustomError(
+        'No Company ID found',
+        500
+      )
+    }
+    accountId = `b.${companyConfig.hubId}` 
+    const projects = await autodeskService.getAutodeskProjectCompany(accessToken, companyConfig.hub_id, companyId);
+    res.json({ success: true, data: projects });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const fetchProjectRole = async (req, res, next) => {
   try {
     const { companyConfig } = req;
 
@@ -250,46 +295,45 @@ const fetchIssueTypesAndRootCauses = async (req, res, next) => {
     }
 
     const accessToken = await getValidApsAccessToken(autodeskId, companyConfig);
+    const accessToken2Legged = await getValid2leggedApsAccessToken(companyConfig);
 
     // Fetch both in parallel
-    const [issueTypes, rootCauses, projectUsers] = await Promise.all([
+    const [issueTypes, projectCompanies, projectUsers] = await Promise.all([
       autodeskService.getAutodeskIssueTypes(accessToken, projectId),
-      autodeskService.getAutodeskIssueRootCauses(accessToken, projectId),
+      autodeskService.getAutodeskProjectCompany(accessToken2Legged, companyConfig?.hub_id, projectId),
       autodeskService.getAutodeskProjectUsers(accessToken, projectId)
     ]);
 
+    // Extract unique roles
+    const uniqueRolesMap = new Map();
+
+    projectUsers.forEach(user => {
+      (user.roles || []).forEach(role => {
+        const key = `${role.roleGroupId}-${role.name}`;
+        if (!uniqueRolesMap.has(key)) {
+          uniqueRolesMap.set(key, {
+            id: role.roleGroupId,
+            name: role.name
+          });
+        }
+      });
+    });
+
+    const projectRoles = Array.from(uniqueRolesMap.values());
+
     res.status(200).json({
       success: true,
-      data: {
-        "Created On": [
-                    { "id": "yesterday", "name": "Yesterday" },
-                    { "id": "last_7_days", "name": "Last 7 Days" },
-                    { "id": "last_14_days", "name": "Last 14 Days" },
-                    { "id": "last_30_days", "name": "Last 30 Days" }
-                  ],
-                  
+      data: {          
         "Due Date": [
-                    { "id": "critical_overdue_7", "name": "Critical (Overdue by > 7 days)" },
-                    { "id": "overdue_less_7", "name": "Overdue (by < 7 days)" },
-                    { "id": "today", "name": "Today" },
-                    { "id": "next_7_days", "name": "Next 7 Days" },
-                    { "id": "next_14_days", "name": "Next 14 Days" }
+                    { "id": "overdue_1", "name": "Overdue (< 1 days)" },
+                    { "id": "overdue_3", "name": "Overdue (1 - 3 days)" },
+                    { "id": "overdue_7", "name": "Overdue (3 - 7 days)" },
+                    { "id": "overdue_critical", "name": "Critical (> 7 days)" },
                   ],
-
-        "Status": [
-                  { "id": "draft", "name": "Draft", "hex": "#3c3c3c" },
-                  { "id": "open", "name": "Open", "hex": "#faa21b" },
-                  { "id": "pending", "name": "Pending", "hex": "#0696d7" },
-                  { "id": "in_progress", "name": "In Progress", "hex": "#a3bcdc" },
-                  { "id": "completed", "name": "Completed", "hex": "#87b340" },
-                  { "id": "in_review", "name": "In Review", "hex": "#a76ef5" },
-                  { "id": "not_approved", "name": "Not Approved", "hex": "#ec4a41" },
-                  { "id": "in_dispute", "name": "In Dispute", "hex": "#ec4a41" },
-                  { "id": "closed", "name": "Closed", "hex": "#3c3c3c" }
-                ],
-        "Issue Types": issueTypes,
-        "Root Cause Categories": rootCauses,
         "Assigned To User": projectUsers,
+        "Assigned To Role": projectRoles,
+        "Assigned To Companies": projectCompanies,
+        "Issue Types": issueTypes,
       }
     });
 
@@ -326,36 +370,44 @@ const fetchReviewWorkflows = async (req, res, next) => {
     }
 
     const accessToken = await getValidApsAccessToken(autodeskId, companyConfig);
+    const accessToken2Legged = await getValid2leggedApsAccessToken(companyConfig);
 
-    const [reviewWorkflows, projectUsers] = await Promise.all([
+    const [reviewWorkflows, projectCompanies, projectUsers] = await Promise.all([
       autodeskService.getAutodeskReviewWorkflows(accessToken, projectId),
+      autodeskService.getAutodeskProjectCompany(accessToken2Legged, companyConfig?.hub_id, projectId),
       autodeskService.getAutodeskProjectUsers(accessToken, projectId)
     ]);
+
+    // Extract unique roles
+    const uniqueRolesMap = new Map();
+
+    projectUsers.forEach(user => {
+      (user.roles || []).forEach(role => {
+        const key = `${role.roleGroupId}-${role.name}`;
+        if (!uniqueRolesMap.has(key)) {
+          uniqueRolesMap.set(key, {
+            id: role.roleGroupId,
+            name: role.name
+          });
+        }
+      });
+    });
+
+    const projectRoles = Array.from(uniqueRolesMap.values());
 
     res.status(200).json({
       success: true,
       data: {
-         "Created On": [
-                    { "id": "yesterday", "name": "Yesterday" },
-                    { "id": "last_7_days", "name": "Last 7 Days" },
-                    { "id": "last_14_days", "name": "Last 14 Days" },
-                    { "id": "last_30_days", "name": "Last 30 Days" }
+         "Next Step Due Date": [
+                    { "id": "overdue_1", "name": "Overdue (< 1 days)" },
+                    { "id": "overdue_3", "name": "Overdue (1 - 3 days)" },
+                    { "id": "overdue_7", "name": "Overdue (3 - 7 days)" },
+                    { "id": "overdue_critical", "name": "Critical (> 7 days)" },
                   ],
-                  
-        "Due Date": [
-                    { "id": "critical_overdue_7", "name": "Critical (Overdue by > 7 days)" },
-                    { "id": "overdue_less_7", "name": "Overdue (by < 7 days)" },
-                    { "id": "today", "name": "Today" },
-                    { "id": "next_7_days", "name": "Next 7 Days" },
-                    { "id": "next_14_days", "name": "Next 14 Days" }
-                  ],
-        "Status": [
-          {"id": "OPEN", "name": "Open", "hex": "#FFFFFF"},
-          {"id": "CLOSED", "name": "Closed", "hex": "#FFFFFF"},
-          {"id": "VOID", "name": "Void", "hex": "#FFFFFF"},
-        ],
-        "Review Workflows": reviewWorkflows,
         "Assigned To User": projectUsers,
+        "Assigned To Role": projectRoles,
+        "Assigned To Companies": projectCompanies,
+        "Review Workflows": reviewWorkflows,
       }
     });
   } catch (error) {
@@ -399,24 +451,40 @@ const fetchFormTemplates = async (req, res, next) => {
       autodeskService.getAutodeskProjectUsers(accessToken, projectId)
     ]);
 
+    // Extract unique roles
+    const uniqueRolesMap = new Map();
+
+    projectUsers.forEach(user => {
+      (user.roles || []).forEach(role => {
+        const key = `${role.roleGroupId}-${role.name}`;
+        if (!uniqueRolesMap.has(key)) {
+          uniqueRolesMap.set(key, {
+            id: role.roleGroupId,
+            name: role.name
+          });
+        }
+      });
+    });
+
+    const projectRoles = Array.from(uniqueRolesMap.values());
+
     res.status(200).json({
       success: true,
       data: {
          "Created On": [
-                    { "id": "yesterday", "name": "Yesterday" },
-                    { "id": "last_7_days", "name": "Last 7 Days" },
-                    { "id": "last_14_days", "name": "Last 14 Days" },
-                    { "id": "last_30_days", "name": "Last 30 Days" }
+                    { "id": "created_1", "name": "Yesterday" },
+                    { "id": "created_3", "name": "Last 3 days" },
+                    { "id": "created_7", "name": "Last 7 days" },
+                    { "id": "created_critical", "name": "More than 7 Days" },
                   ],
-          "Status": [
-            {"id": "open", "name": "Open", "hex": "#FFFFFF"},
-            {"id": "in_progress", "name": "In Progress", "hex": "#FFFFFF"},
-            {"id": "closed", "name": "Closed", "hex": "#FFFFFF"},
-            {"id": "archived", "name": "Archived", "hex": "#FFFFFF"},
-          ],
+        "Status": [
+                    { "id": "in_progress", "name": "Open" },
+                    { "id": "in_review", "name": "In Review" },
+                  ],
+        "Assigned To User": projectUsers,
+        "Assigned To Role": projectRoles,
+        "Assigned To Company": projectCompanies,
         "Form Templates": formTemplates,
-        "Assigned to User": projectUsers,
-        "Assigned to Company": projectCompanies,
       }
     });
   } catch (error) {

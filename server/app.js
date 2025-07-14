@@ -17,8 +17,8 @@ const { scheduleAggregationCron } = require('./services/escalationAggregatorServ
 
 const app = express();
 
-const runPythonWorker = require('./python-workers/run_py'); // Import the Python worker script
-runPythonWorker(); // Run the Python worker immediately
+// const runPythonWorker = require('./python-workers/run_py'); // Import the Python worker script
+// runPythonWorker(); // Run the Python worker immediately
 
 const corsMiddleware = require('./middleware/cors');
 app.use(corsMiddleware);

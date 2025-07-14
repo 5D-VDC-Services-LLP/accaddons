@@ -6,6 +6,10 @@ import DLF_Logo from '../assets/companylogos/dlf.svg'; // Example logo, replace 
 import PS_Logo from '../assets/companylogos/ps.svg'; // Example logo, replace with your actual logo
 import logo from '../assets/companylogos/5dvdc.svg'; // Example logo, replace with
 
+import DLF_bg from '../assets/backgroundImgs/dlf.svg'; // Example logo, replace with your actual logo
+import PS_bg from '../assets/backgroundImgs/ps.svg'; // Example logo, replace with your actual logo
+import bg from '../assets/backgroundImgs/5dvdc.svg'; // Example logo, replace with
+
 // Placeholder for Autodesk logo (you can replace this with your actual SVG)
 import ADSK_logo from '../assets/ADSK_light.svg'; // Make sure this path is correct
 
@@ -13,6 +17,22 @@ const logoMap = {
   DLF_Logo: DLF_Logo,
   PS_Logo: PS_Logo,
   logo: logo, // or whatever key your database uses
+};
+
+const backgroundMap = {
+  DLF_bg: DLF_bg,
+  PS_bg: PS_bg,
+  bg: bg,
+};
+
+// Define specific background positions if needed per image
+// You can extend this map based on your company details if the backend
+// can provide a specific position key/value.
+const backgroundPositionMap = {
+  DLF_bg: 'bottom left',
+  PS_bg: 'center center',
+  bg: '30% center', // Changed: '45% center' moves it slightly left of center
+  Ambuja_bg: 'top center',
 };
 
 const CompanyLandingPage = () => {
@@ -83,35 +103,60 @@ const CompanyLandingPage = () => {
 
   // Destructure details for easier use
   const { name, logo_url, background_img_url, description } = companyDetails;
-  console.log(logo_url)
+  const currentBackgroundImg = backgroundMap[background_img_url];
+  const currentBackgroundPosition = backgroundPositionMap[background_img_url] || 'center center'; // Default if not found
+  // Determine background size dynamically
+  let currentBackgroundSize = 'cover'; // Default to 'cover'
+  if (background_img_url === 'bg') { // If the 'bg' image is active
+    currentBackgroundSize = '180%'; // Set zoom for this specific image
+  }
 
-  return (
-    <div
-      className="flex items-center justify-center min-h-screen p-4 font-inter bg-cover bg-center"
-      style={{ backgroundImage: `url(${background_img_url})` }}
-    >
-      <div className="bg-white/75 backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.3)] rounded-xl p-6 md:pt-7 md:p-10 w-full max-w-4xl border border-white/20 transition duration-700 ease-in-out">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10">
-          <img src={logoMap[logo_url]} alt={`${name} Logo`} className="h-12" />
+    return (
+    <div className="relative min-h-screen bg-white text-white font-inter overflow-hidden">
+      {/* You will import Navbar separately here */}
+      {/* <Navbar /> */}
+
+      {/* Diagonal Background Image Container */}
+      <div
+        className="absolute top-0 right-0 w-3/5 h-full bg-cover bg-no-repeat"
+        style={{
+          backgroundImage: `url(${currentBackgroundImg})`,
+          backgroundPosition: currentBackgroundPosition, // Apply dynamic position
+          backgroundSize: currentBackgroundSize, // Apply dynamic size here
+          clipPath: 'polygon(25% 0%, 100% 0%, 100% 100%, 0% 100%)', // This creates the diagonal cut
+        }}
+      ></div>
+
+      {/* Main Content Area (Left side) */}
+      <div className="relative z-10 flex flex-col items-start justify-center min-h-screen w-full md:w-3/5 p-8 md:p-16">
+        {/* Top left Logo */}
+        <div className="mb-auto"> {/* This pushes content down */}
+          <img src={logoMap['logo']} alt="5DVDC Logo" className="h-16 w-auto" />
         </div>
-        {/* Main Content */}
-        <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            {name} Notification Center
-          </h1>
-          <p className="text-gray-600 text-lg mb-10 leading-relaxed">
-            {description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'}
+
+        {/* Centered Content */}
+        <div className="flex flex-col items-start w-full max-w-lg mx-auto md:ml-0 md:mr-auto my-auto text-black">
+          <img
+            src={logoMap[logo_url]}
+            alt={`${name} Logo`}
+            className="h-16 mb-6" // Adjusted size and spacing
+          />
+          <p className="text-gray-700 text-xl font-medium mb-16">
+            Your project escalation engine is ready.
           </p>
+          <h1 className="text-3xl font-semibold text-gray-900 mb-8">
+            Login with Autodesk ID
+          </h1>
+
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg shadow-md transition duration-300 flex items-center justify-center gap-3 text-lg mx-auto"
+            className="bg-black hover:bg-gray-800 text-white font-semibold py-4 px-10 rounded-lg shadow-lg transition duration-300 flex items-center justify-center gap-3 text-lg"
             onClick={login}
             disabled={authStatus === 'authenticating'}
           >
-            <span>
-              {authStatus === 'authenticating' ? 'Authenticating...' : 'Login with Autodesk'}
-            </span>
             <img src={ADSK_logo} alt="Autodesk" className="h-6" />
+            <span>
+              {authStatus === 'authenticating' ? 'Authenticating...' : 'Log In'}
+            </span>
           </button>
 
           {/* Authentication Status and Error Messages */}
@@ -122,9 +167,14 @@ const CompanyLandingPage = () => {
             <div className="mt-4 text-green-600 font-medium">Successfully logged in! Redirecting to workflows page...</div>
           )}
         </div>
+
+        {/* Footer */}
+        <div className="mt-auto w-full text-left text-gray-500 text-sm">
+          <p>© 2025 5D VDC Services LLP All rights reserved. Version 1.x.x</p>
+        </div>
       </div>
     </div>
   );
 };
 
-export default CompanyLandingPage;
+export default CompanyLandingPage
