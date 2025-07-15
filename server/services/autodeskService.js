@@ -15,6 +15,13 @@ const OAUTH_TOKEN_URL = 'https://developer.api.autodesk.com/authentication/v2/to
  * @returns {Promise<Object>} - An object containing access_token and refresh_token.
  */
 const getApsTokens = async (clientId, clientSecret, callbackUrl, code) => {
+  if (process.env.NODE_ENV === 'qa') {
+    return {
+      access_token: "eyJhbGciOiJSUzI1NiIsImtpZCI6IlhrUFpfSmhoXzlTYzNZS01oRERBZFBWeFowOF9SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiLCJhY2NvdW50OnJlYWQiXSwiY2xpZW50X2lkIjoiREFJRTV1OVJvU3B1bjFSZ0dHblA1TGVGeVBucXhzVVoiLCJpc3MiOiJodHRwczovL2RldmVsb3Blci5hcGkuYXV0b2Rlc2suY29tIiwiYXVkIjoiaHR0cHM6Ly9hdXRvZGVzay5jb20iLCJqdGkiOiJmMjIwYVJ6Z1ZxajN2U2I3SnFncmFsS3pKcFI0RHJiSnNkOTBzRnBYeXpaanNxN2drUGN2VXlqOGNOQzAybFl3IiwidXNlcmlkIjoiN0xOMlFKNVpRRVdDQjcyQyIsImV4cCI6MTc1MjU2NjIwOX0.dcPvMNRWv6tWwQiEEP5_BjakAlHqZw-WPXQ51yIu7QHRhIfH8e7jXm9zrhuYw715jpQkVaHVuBpdsneT3tPTHH227ku5WNgLZ8ASyD-ubOW87JWK5NgvsFA4jVhh6MmmAa5-DlrGLiLKDbDlDMPBavo2adXH1yliVlqrvZbfGRqSnxi168LBN9IsqDUWv3jw3vF0MoWSJssU2ScoV6PoJfPePsjCccv_6sjyhYZ5jwUQO3kWAv29rwoFGHPyl09-XrnZ3ltJri3rX9Sn9lCIpN2W626xJVWcauGJ5WvwNL13Cs9cZ2LsC8znn8jHnf7voydfmHJ38oad_rz_n0Djuw",
+      refresh_token: "ue1c1.PICpepeTCK0H8V7wFn8MmUj9Q3OePoWHk69Tu6Fqic",
+      expires_in: 3600
+    };
+  }
   try {
     const response = await axios.post(config.autodesk.tokenUrl,
       new URLSearchParams({

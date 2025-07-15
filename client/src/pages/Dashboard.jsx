@@ -37,6 +37,8 @@ const Dashboard = () => {
     error: projectContextError
   } = useProjectContext();
 
+  console.log(autodeskProjects)
+
   const [isLoadingWorkflows, setIsLoadingWorkflows] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [workflows, setWorkflows] = useState([]);

@@ -15,6 +15,13 @@ const startServer = async () => {
     // Start the Express server
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
+      if (app._router && app._router.stack) {
+      app._router.stack.forEach((middleware) => {
+        if (middleware.route) {
+          console.log('Registered route:', middleware.route.path);
+        }
+    });
+  }
       console.log(`Access backend at http://localhost:${PORT}`);
       console.log(`Main Domain for Multi-tenancy: ${config.mainDomain}`);
     });

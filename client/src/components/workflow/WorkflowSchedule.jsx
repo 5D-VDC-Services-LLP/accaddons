@@ -1,7 +1,7 @@
 // src/components/workflow/WorkflowSchedule.jsx
 import React from 'react';
 
-const WorkflowSchedule = ({ selectedDays, toggleDay }) => {
+const WorkflowSchedule = ({ selectedDays, toggleDay, resetDays }) => {
   const dayOptions = [
     { key: 'mon', label: 'Mon', display: 'M' },
     { key: 'tue', label: 'Tue', display: 'T' },
@@ -14,13 +14,8 @@ const WorkflowSchedule = ({ selectedDays, toggleDay }) => {
 
   return (
     <div className="bg-white rounded-lg p-6 col-span-1 shadow-sm self-start">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-medium text-gray-900">Schedule</h2>
-        <button className="text-gray-500 text-sm hover:text-primary">Reset</button>
-      </div>
-
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+        <label className="block text-sm font-medium text-gray-700 mb-6">
           Select day of the week
         </label>
         <div className="flex space-x-2">
@@ -39,6 +34,9 @@ const WorkflowSchedule = ({ selectedDays, toggleDay }) => {
             </button>
           ))}
         </div>
+      </div>
+            <div className="flex items-center justify-end mt-12">
+        <button className="text-gray-500 text-sm hover:text-primary" onClick={resetDays}>Reset</button>
       </div>
     </div>
   );

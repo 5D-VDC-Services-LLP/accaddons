@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const config = {
   port: process.env.PORT || 8080,
-  frontendPort: 5173,
+  frontendPort: 8080,
   postgres: {
     user: process.env.PG_USER,
     host: process.env.PG_HOST,

@@ -6,7 +6,11 @@ const config = require('../config');
 const allowedOrigins = [
   `http://localhost:${config.port}`, // For your own backend's origin if needed
   `http://localhost:5173`, // Vite frontend dev port
+  `http://localhost:8080`, // Vite frontend dev port
+
   `http://*.localhost:5173`, // Wildcard for Vite frontend dev port
+  `http://*.localhost:8080`, // Wildcard for Vite frontend dev port
+
   `https://*.${config.mainDomain}`, // Wildcard for production subdomains
   `http://*.${config.mainDomain}`, // Wildcard for HTTP in dev/local (if applicable)
   `https://${config.mainDomain}`, // Main domain itself

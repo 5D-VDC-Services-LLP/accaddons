@@ -11,6 +11,7 @@ import VerifyPhone from './pages/VerifyPhone';
 import { AuthProvider } from './context/authContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import WorkflowConfig from './pages/WorkflowConfig'
+import NotificationConfig from './pages/NotificationConfig'
 
 
 const AppContent = () => {
@@ -50,6 +51,15 @@ const AppContent = () => {
               </ProtectedRoute>
             }
           />
+
+          {/* <Route
+            path="/workflows/:projectId/:moduleType/create-workflow"
+            element={
+              <ProtectedRoute>
+                <NotificationConfig />
+              </ProtectedRoute>
+            }
+          /> */}
 
         </Routes>
     </div>

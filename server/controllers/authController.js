@@ -173,7 +173,7 @@ const autodeskCallback = async (req, res, next) => {
     // 7. Send the internal JWT back to the frontend via HTTP-only cookie.
     res.cookie('jwt', internalJwtToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Use secure in production (HTTPS)
+      // secure: process.env.NODE_ENV === 'production', // Use secure in production (HTTPS)
       sameSite: 'Lax', // Or 'Strict' depending on your needs
       maxAge: 14 * 24 * 60 * 60 * 1000, // 7 days, adjust as needed
       // Conditionally set the domain attribute

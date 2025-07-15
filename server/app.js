@@ -1,5 +1,6 @@
 // src/app.js
 const express = require('express');
+const path = require('path');
 const cookieParser = require('cookie-parser');
 const session = require('express-session'); // For OAuth state management
 const config = require('./config');
@@ -33,7 +34,7 @@ app.use(session({
   secret: config.jwtSecret, // Use the same secret as JWT for consistency, or a separate one
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: process.env.NODE_ENV === 'production' } // secure: true in production (HTTPS)
+  // cookie: { secure: process.env.NODE_ENV === 'production' } // secure: true in production (HTTPS)
 }));
 
 // Health check endpoint (public)
@@ -61,6 +62,20 @@ app.use('/api/escalation', escalationRoutes);
 
 // Centralized Error Handling Middleware (must be last)
 app.use(errorHandler);
+
+if (process.env.NODE_ENV === 'production') {
+  // Resolve the project root: go up from 'src' to 'server', then up again to 'your_project_root'
+  const projectRoot = path.resolve(__dirname, '../');
+  // Construct the full path to the client's build directory
+  const clientBuildPath = path.join(projectRoot, 'client', 'dist');
+
+  app.use(express.static(clientBuildPath));
+
+  app.use((req, res) => {
+    const indexPath = path.join(clientBuildPath, 'index.html');
+    res.sendFile(indexPath);
+  });
+}
 
 const AUTODESK_ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlhrUFpfSmhoXzlTYzNZS01oRERBZFBWeFowOF9SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiLCJhY2NvdW50OnJlYWQiXSwiY2xpZW50X2lkIjoiREFJRTV1OVJvU3B1bjFSZ0dHblA1TGVGeVBucXhzVVoiLCJpc3MiOiJodHRwczovL2RldmVsb3Blci5hcGkuYXV0b2Rlc2suY29tIiwiYXVkIjoiaHR0cHM6Ly9hdXRvZGVzay5jb20iLCJqdGkiOiJrQzE5V3J3cWlNWHlSaU9PSU5HRGRYVmF0SUp1YTlyVUNOWk5TblFucGtkWHlHUWxzNXNBR040bGdzS09Hc0dvIiwiZXhwIjoxNzUyMDcxMjMwLCJ1c2VyaWQiOiI3TE4yUUo1WlFFV0NCNzJDIn0.OV1IDGI1UhxvkgmgCpsfrfhlxtco9KbkrfmsEGQm8g3elf4ngMPlqoQSb1IBtTOH_V3mMV9-N5y9GGhDqbrDCsXETeuslJz4MzGv08F4PtKnh_2QynyX9pcfezI9absyKCd44iLjiRuGRzlzqdRkKhoQjpIonAg_2i45p4sOszjDSxWGZrSl9xLDNQigiodSPLzukY7CFKzhgLJ7xaJwBBhA09la-kAEh4rSwiiHYxEFvGxR37UiHLHYfHf4rHiVw8YsjvOJlCZwOW93qk_fKeLz8lRJfZmELVv99-tJcQfm-TL9wOy-HYgK1PPGdCWp7ALSAeNob0wBVzAbPmycgA"
 

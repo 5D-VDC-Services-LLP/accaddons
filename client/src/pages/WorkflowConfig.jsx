@@ -226,6 +226,10 @@ const WorkflowConfig = () => {
     );
   };
 
+  const resetDays = () =>{
+    setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri']);
+  }
+
   // Handler for the "Cancel" button
   const handleCancel = () => {
     navigate(-1); // Go back to the previous page
@@ -378,27 +382,26 @@ const WorkflowConfig = () => {
           />
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-  {/* Filters Section */}
-  <div className="bg-white flex-1 basis-2/3 lg:basis-3/4 p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
-    <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Filters</h2>
-    <WorkflowFilter
-      filters={filters}
-      moduleFilters={moduleFilters}
-      handleFilterChange={handleFilterChange}
-      addFilter={addFilter}
-      handleDeleteFilter={handleDeleteFilter}
-      resetFilters={resetFilters}
-    />
-  </div>
+        <div className="lg:grid-cols-[1fr_auto] grid gap-8">
+        {/* Filters Section */}
+        <div className="bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Filters</h2>
+          <WorkflowFilter
+            filters={filters}
+            moduleFilters={moduleFilters}
+            handleFilterChange={handleFilterChange}
+            addFilter={addFilter}
+            handleDeleteFilter={handleDeleteFilter}
+            resetFilters={resetFilters}
+          />
+        </div>
 
-  {/* Schedule Section */}
-  <div className="bg-white flex-1 basis-1/3 lg:basis-1/4 p-6 rounded-lg shadow-md max-h-[80vh]">
-    <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Schedule</h2>
-    <WorkflowSchedule selectedDays={selectedDays} toggleDay={toggleDay} />
-  </div>
-</div>
-
+        {/* Schedule Section */}
+        <div className="bg-white p-6 rounded-lg shadow-md max-h-[80vh] flex-shrink-0 self-start">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Schedule</h2>
+          <WorkflowSchedule selectedDays={selectedDays} toggleDay={toggleDay} resetDays={resetDays} />
+        </div>
+      </div>
       </div>
     </div>
   );
