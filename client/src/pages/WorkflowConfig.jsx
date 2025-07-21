@@ -4,7 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom'; // Import useParams a
 import { useAuth } from '../context/authContext'; // Importing auth context for user data
 import {
   WorkflowHeader,
-  WorkflowDetails,
+  WorkflowTitle,
+  WorkflowFilters,
   NotificationChannels,
   WorkflowFilter,
   WorkflowSchedule,
@@ -146,7 +147,7 @@ const WorkflowConfig = () => {
         const filterEndpoint = filterMap[moduleType];
 
 
-        const res = await fetch(`${getBackendUrl()}/api/autodesk/${projectId}/${filterEndpoint}`, {
+        const res = await fetch(`${getBackendUrl()}/api/autodesk/${projectId}/${filterEndpoint}?module=escalations`, {
           method: 'GET',
           credentials: 'include', // ✅ Include cookies for authentication
           headers: {
@@ -252,7 +253,8 @@ const WorkflowConfig = () => {
             autodeskId: user.autodeskId,
             email: user.email
         })),
-          company: selectedCompanies.map(selectedCompany => selectedCompany)
+          company: selectedCompanies.map(selectedCompany => selectedCompany.id),
+          roles: selectedRoles
         },
         // Note: The 'filters' structure here remains as per your current React state.
         // Your sample payload had a different, more nested structure for filters.
@@ -268,7 +270,7 @@ const WorkflowConfig = () => {
     console.log(payload)
 
     try {
-      const response = await fetch(`${getBackendUrl()}/api/workflows/`, {
+      const response = await fetch(`${getBackendUrl()}/api/workflows/escalation-workflows`, {
         credentials: 'include',
         method: 'POST',
         headers: {
@@ -323,12 +325,14 @@ const WorkflowConfig = () => {
           </h1>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={handleCancel}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-md transition-colors"
             >
               Cancel
             </button>
             <button
+              type='button'
               onClick={handleSave}
               className="inline-flex items-center bg-black border border-black text-white px-4 py-2 text-sm font-medium rounded-md shadow hover:bg-gray-800 transition ease-in-out duration-300"
             >
@@ -337,55 +341,34 @@ const WorkflowConfig = () => {
           </div>
         </div>
 
-        {/* Workflow Details Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Details</h2>
-          <WorkflowDetails
-            title={title}
-            setTitle={setTitle}
+        <div className="lg:grid-cols-[2fr_1fr] grid gap-4 items-start mb-8">
+        {/* Workflow Title Section */}
+        <div className="bg-white w-full p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold text-gray-800">Workflow Details</h2>
+        <WorkflowTitle
+          title={title}
+          setTitle={setTitle}
+        />
+      </div>
 
-            isUserActive={isUserActive}
-            setIsUserActive={setIsUserActive}
-            isCompanyActive={isCompanyActive}
-            setIsCompanyActive={setIsCompanyActive}
-            isRoleActive={isRoleActive}
-            setIsRoleActive={setIsRoleActive}
+      {/* Notification Channels Section */}
+      <div className="bg-white p-8 rounded-lg shadow-md flex flex-col gap-4">
+        <h2 className="text-xl font-semibold text-gray-800 mb-3">
+          Notification Channels
+        </h2>
+        <NotificationChannels
+          isWhatsAppSelected={isWhatsAppSelected}
+          setIsWhatsAppSelected={setIsWhatsAppSelected}
+          isEmailSelected={isEmailSelected}
+          setIsEmailSelected={setIsEmailSelected}
+        />
+      </div>
+    </div>
 
-            searchUser={searchUser}
-            setSearchUser={setSearchUser}
-            searchCompany={searchCompany}
-            setSearchCompany={setSearchCompany}
-            searchRole={searchRole}
-            setSearchRole={setSearchRole}
 
-            users={users.users}
-            companies={companies}
-            roles={roles}
-
-            selectedUsers={selectedUsers}
-            setSelectedUsers={setSelectedUsers}
-            selectedCompanies={selectedCompanies}
-            setSelectedCompanies={setSelectedCompanies}
-            selectedRoles={selectedRoles}
-            setSelectedRoles={setSelectedRoles}
-          />
-        </div>
-
-        {/* Notification Channels Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-3">Notification Channels</h2>
-          <NotificationChannels
-            isWhatsAppSelected={isWhatsAppSelected}
-            setIsWhatsAppSelected={setIsWhatsAppSelected}
-            isEmailSelected={isEmailSelected}
-            setIsEmailSelected={setIsEmailSelected}
-          />
-        </div>
-
-        <div className="lg:grid-cols-[1fr_auto] grid gap-8">
         {/* Filters Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Filters</h2>
+        <div className="bg-white p-4 rounded-lg shadow-md overflow-y-auto max-h-[80vh] mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 ">Workflow Filters</h2>
           <WorkflowFilter
             filters={filters}
             moduleFilters={moduleFilters}
@@ -396,12 +379,44 @@ const WorkflowConfig = () => {
           />
         </div>
 
+        <div className="lg:grid-cols-[2fr_1fr] mb-3 grid gap-8">
+        {/* Filters Section (users/companies/roles) */}
+          <div className="bg-white p-6 rounded-lg shadow-md overflow-visible">
+          <h2 className="text-xl font-semibold text-gray-800 mb-8">Escalate To</h2>
+          <WorkflowFilters
+            isUserActive={isUserActive}
+            setIsUserActive={setIsUserActive}
+            searchUser={searchUser}
+            setSearchUser={setSearchUser}
+            isCompanyActive={isCompanyActive}
+            setIsCompanyActive={setIsCompanyActive}
+            searchCompany={searchCompany}
+            setSearchCompany={setSearchCompany}
+            isRoleActive={isRoleActive}
+            setIsRoleActive={setIsRoleActive}
+            searchRole={searchRole}
+            setSearchRole={setSearchRole}
+            users={users.users}
+            companies={companies}
+            roles={roles}
+            selectedUsers={selectedUsers}
+            setSelectedUsers={setSelectedUsers}
+            selectedCompanies={selectedCompanies}
+            setSelectedCompanies={setSelectedCompanies}
+            selectedRoles={selectedRoles}
+            setSelectedRoles={setSelectedRoles}
+          />
+        </div>
+
+        
+
         {/* Schedule Section */}
         <div className="bg-white p-6 rounded-lg shadow-md max-h-[80vh] flex-shrink-0 self-start">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Schedule</h2>
           <WorkflowSchedule selectedDays={selectedDays} toggleDay={toggleDay} resetDays={resetDays} />
         </div>
-      </div>
+        </div>
+
       </div>
     </div>
   );

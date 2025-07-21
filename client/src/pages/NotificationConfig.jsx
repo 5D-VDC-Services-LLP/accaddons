@@ -401,7 +401,7 @@ const NotificationConfig = () => {
   const [isEmailSelected, setIsEmailSelected] = useState(false);
 
   // New state for the schedule: number of days due
-  const [daysDue, setDaysDue] = useState(1); // Default to 7 days
+const [selectedDueIn, setSelectedDueIn] = useState('due_0'); // default value
 
   const [moduleFilters, setModuleFilters] = useState(null);
   const [filtersLoading, setFiltersLoading] = useState(false);
@@ -428,7 +428,7 @@ const NotificationConfig = () => {
 
         const filterEndpoint = filterMap[moduleType];
 
-        const res = await fetch(`${getBackendUrl()}/api/autodesk/${projectId}/${filterEndpoint}`, {
+        const res = await fetch(`${getBackendUrl()}/api/autodesk/${projectId}/${filterEndpoint}?module=notifications`, {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -552,16 +552,14 @@ const NotificationConfig = () => {
         ...(isWhatsAppSelected ? ['whatsapp'] : [])
       ],
       filters: filters,
-      schedule: {
-        days_due: daysDue // Changed to days_due
-      },
+      due_in: selectedDueIn,
       created_by: user.autodeskId,
     };
 
     console.log("Saving workflow with payload:", payload);
 
     try {
-      const response = await fetch(`${getBackendUrl()}/api/workflows/`, {
+      const response = await fetch(`${getBackendUrl()}/api/workflows/notification-workflows`, {
         credentials: 'include',
         method: 'POST',
         headers: {
@@ -612,12 +610,14 @@ const NotificationConfig = () => {
           </h1>
           <div className="flex gap-3">
             <button
+              type='button'
               onClick={handleCancel}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-md transition-colors"
             >
               Cancel
             </button>
             <button
+            type='button'
               onClick={handleSave}
               className="inline-flex items-center bg-black border border-black text-white px-4 py-2 text-sm font-medium rounded-md shadow hover:bg-gray-800 transition ease-in-out duration-300"
             >
@@ -666,8 +666,8 @@ const NotificationConfig = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm max-h-auto flex-shrink-0 self-start">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Workflow Schedule</h2>
             <NotificationSchedule
-              daysDue={daysDue}
-              setDaysDue={setDaysDue}
+              selectedDueIn={selectedDueIn}
+              setSelectedDueIn={setSelectedDueIn}
               moduleType={moduleType} // Pass moduleType to customize options
             />
           </div>

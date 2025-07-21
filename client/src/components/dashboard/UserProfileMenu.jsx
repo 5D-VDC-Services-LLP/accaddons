@@ -8,7 +8,7 @@ const UserProfileMenu = ({ isOpen, onClose, userProfile, onSignOut }) => {
       <div className={`fixed right-0 top-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center justify-between p-4 border-b">
           <span className="font-semibold text-gray-800">User Details</span>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
+          <button type='button' onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
             <X className="w-6 h-6 text-gray-600" />
           </button>
         </div>
@@ -23,6 +23,7 @@ const UserProfileMenu = ({ isOpen, onClose, userProfile, onSignOut }) => {
             <span className="text-sm">Change Phone Number</span>
           </div>
           <button
+          type='button'
             className="flex items-center space-x-2 text-red-600 cursor-pointer hover:text-red-700 transition-colors w-full text-left"
             onClick={onSignOut}
           >

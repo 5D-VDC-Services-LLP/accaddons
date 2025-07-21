@@ -64,7 +64,7 @@ const VerifyPhone = () => {
             onChange={(e) => setPhoneNumber(e.target.value)}
             className="w-full mb-2 p-2 border rounded"
           />
-          <button onClick={handleSubmitPhone} className="w-full bg-blue-600 text-white py-2 rounded">
+          <button type='button' onClick={handleSubmitPhone} className="w-full bg-blue-600 text-white py-2 rounded">
             Send OTP
           </button>
         </>
@@ -79,7 +79,7 @@ const VerifyPhone = () => {
             onChange={(e) => setOtp(e.target.value)}
             className="w-full mb-2 p-2 border rounded"
           />
-          <button onClick={handleVerifyOtp} className="w-full bg-green-600 text-white py-2 rounded">
+          <button type='button' onClick={handleVerifyOtp} className="w-full bg-green-600 text-white py-2 rounded">
             Verify OTP
           </button>
         </>

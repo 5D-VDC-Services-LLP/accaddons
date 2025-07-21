@@ -590,6 +590,7 @@ const WorkflowDetails = ({
             />
             {searchValue && (
               <button
+                type="button"
                 onClick={() => setSearchValue("")}
                 className="p-1 text-gray-400 hover:text-gray-600"
               >

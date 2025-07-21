@@ -3,16 +3,15 @@ import React from 'react';
 import WorkflowRow from './WorkflowRow'; // Path to the renamed WorkflowRow.jsx
 import EditWorkflowModal from './EditWorkflowModal'; // Path to the newly created EditWorkflowModal.jsx
 import ConfirmationModal from '../ConfirmationModal';
-import { getBackendUrl } from '../../utils/urlUtils';
 import { useState } from 'react';
-
 
 const WorkflowTable = ({
   workflows,
   isLoading,
   error,
   onEditWorkflow,
-  // onDeleteWorkflow, // This prop will now be handled internally
+  onDeleteWorkflow,
+  workflowType,
   onUpdateWorkflowStatus,
   isEditModalOpen,
   setIsEditModalOpen,
@@ -35,37 +34,17 @@ const WorkflowTable = ({
     }
   };
 
-  // Function to perform the actual deletion after confirmation
-  const confirmDeleteWorkflow = async () => {
-    if (!workflowToDelete) return;
+    const confirmDeleteWorkflow = async () => {
+        if (!workflowToDelete) return;
+        try {
+            await onDeleteWorkflow(workflowToDelete.workflow_id);
 
-    try {
-      const response = await fetch(`${getBackendUrl()}/api/workflows/${workflowToDelete.workflow_id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      console.log(`Workflow ${workflowToDelete.workflow_id} deleted successfully.`);
-      setIsDeleteModalOpen(false);
-      setWorkflowToDelete(null);
-      
-      // Update workflows state in the parent by calling onWorkflowsUpdated
-      // This is crucial for reflecting the change in the UI
-      onWorkflowsUpdated(); 
-
-    } catch (err) {
-      console.error("Error deleting workflow:", err);
-      setDeleteError(`Failed to delete workflow: ${err.message}`);
-    }
-  };
+            setIsDeleteModalOpen(false);
+            setWorkflowToDelete(null);
+        } catch (err) {
+            setDeleteError(`Failed to delete workflow: ${err.message || "Unknown error"}`);
+        }
+    };
 
   const cancelDelete = () => {
     setIsDeleteModalOpen(false);

@@ -52,14 +52,14 @@ const AppContent = () => {
             }
           />
 
-          {/* <Route
-            path="/workflows/:projectId/:moduleType/create-workflow"
+          <Route
+            path="/workflows/:projectId/:moduleType/create-notification"
             element={
               <ProtectedRoute>
                 <NotificationConfig />
               </ProtectedRoute>
             }
-          /> */}
+          />
 
         </Routes>
     </div>

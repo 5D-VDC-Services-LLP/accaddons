@@ -48,13 +48,17 @@
 // src/components/workflow/NotificationWorkflowSchedule.jsx
 import React from 'react';
 
-const NotificationWorkflowSchedule = ({ daysDue, setDaysDue }) => {
+const NotificationWorkflowSchedule = ({ selectedDueIn, setSelectedDueIn }) => {
   // Define the specific options for days due
   const dayOptions = [
-    { value: 1, label: 'Due Tomorrow' },
-    { value: 2, label: 'Due in 2 days' },
-    { value: 3, label: 'Due in 3 days' },
-  ];
+  { id: 'due_0', name: 'On the due date' },
+  { id: 'due_1', name: '1 day from due date' },
+  { id: 'due_2', name: '2 days from due date' },
+  { id: 'due_3', name: '3 days from due date' },
+  { id: 'due_5', name: '5 days from due date' },
+  { id: 'due_7', name: 'a week from due date' },
+];
+
 
   return (
     <div className="flex flex-col space-y-4 p-4 h-full">
@@ -62,17 +66,15 @@ const NotificationWorkflowSchedule = ({ daysDue, setDaysDue }) => {
         Timeframe:
       </label>
       <select
-        id="daysDue"
-        value={daysDue} // Controlled component: value reflects the state
-        onChange={(e) => setDaysDue(parseInt(e.target.value, 10))} // Update state on change
-        className="w-full rounded-md border-gray-300 border p-1 sm:text-sm"
+      value={selectedDueIn} // holds the selected id (e.g. '0', '1', ...)
+      onChange={(e) => setSelectedDueIn(e.target.value)}
       >
-        {dayOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      {dayOptions.map(option => (
+        <option key={option.id} value={option.id}>
+          {option.name}
+        </option>
+      ))}
+    </select>
       <div className="flex-grow"></div> {/* This will push the content to the top */}
     </div>
   );

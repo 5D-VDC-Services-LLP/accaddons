@@ -131,7 +131,7 @@ const CompanyLandingPage = () => {
       <div className="relative z-10 flex flex-col items-start justify-center min-h-screen w-full md:w-3/5 p-8 md:p-16">
         {/* Top left Logo */}
         <div className="mb-auto"> {/* This pushes content down */}
-          <img src={logoMap['logo']} alt="5DVDC Logo" className="h-16 w-auto" />
+          {/* <img src={logoMap['logo']} alt="5DVDC Logo" className="h-16 w-auto" /> */}
         </div>
 
         {/* Centered Content */}

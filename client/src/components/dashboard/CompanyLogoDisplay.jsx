@@ -9,17 +9,17 @@ const CompanyLogoDisplay = ({ subdomain, companyLogo }) => {
         <img
           src={companyLogo}
           alt={`${subdomain} logo`}
-          className="h-12 w-auto bg-white rounded p-0.5" // Reduced padding slightly
+          className="h-12 w-auto rounded p-0.5" // Reduced padding slightly
         />
       )}
       {/* Right: Only show main logo if NOT on 5dvdc subdomain */}
-      {subdomain !== '5dvdc' && (
+      {/* {subdomain !== '5dvdc' && (
         <img
           src={mainLogo}
           alt="Main Company Logo"
           className="h-12 w-auto bg-white rounded p-0.5" // Reduced padding slightly
         />
-      )}
+      )} */}
     </div>
   );
 };

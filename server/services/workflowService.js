@@ -33,7 +33,8 @@ const workflowSchema = new mongoose.Schema({
         autodeskId: { type: String, required: true },
         email: { type: String, required: true } // Assuming email is always present
     }],
-    company: [{ type: String }] // This remains an array of strings (company IDs)
+    company: [{ type: String }], // This remains an array of strings (company IDs)
+    roles: [{ type: String }]
  },
 
   filters: { type: mongoose.Schema.Types.Mixed }, // Open-ended

@@ -36,7 +36,7 @@ const WorkflowSchedule = ({ selectedDays, toggleDay, resetDays }) => {
         </div>
       </div>
             <div className="flex items-center justify-end mt-12">
-        <button className="text-gray-500 text-sm hover:text-primary" onClick={resetDays}>Reset</button>
+        <button type='button' className="text-gray-500 text-sm hover:text-primary" onClick={resetDays}>Reset</button>
       </div>
     </div>
   );

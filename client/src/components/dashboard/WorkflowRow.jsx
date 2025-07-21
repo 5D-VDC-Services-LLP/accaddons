@@ -46,6 +46,7 @@ const MoreOptionsButton = ({onPlay, onEdit, onDelete, itemId }) => {
   return (
     <div className="relative">
       <button
+      type="button"
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="text-gray-400 hover:text-gray-600 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors"
@@ -62,6 +63,7 @@ const MoreOptionsButton = ({onPlay, onEdit, onDelete, itemId }) => {
           
         >
           <button
+          type="button"
             onClick={handlePlayNow}
             disabled={isRunning}
             className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 rounded-b-md transition-colors ${
@@ -88,6 +90,7 @@ const MoreOptionsButton = ({onPlay, onEdit, onDelete, itemId }) => {
           </button>
 
           <button
+          type="button"
             onClick={handleEditClick}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-t-md transition-colors"
           >
@@ -95,6 +98,7 @@ const MoreOptionsButton = ({onPlay, onEdit, onDelete, itemId }) => {
             Edit
           </button>
           <button
+          type="button"
             onClick={handleDeleteClick}
             className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-b-md transition-colors"
           >
@@ -215,6 +219,7 @@ const WorkflowRow = ({ workflow, onEditWorkflow, onDeleteWorkflow, onUpdateWorkf
       <td className="px-6 py-4">
         <div className="flex gap-2">
           <button
+          type="button"
             onClick={toggleStatus}
             className={`p-2 rounded-full transition-colors ${
               isActive
@@ -227,6 +232,7 @@ const WorkflowRow = ({ workflow, onEditWorkflow, onDeleteWorkflow, onUpdateWorkf
             <Play className="w-4 h-4" />
           </button>
           <button
+          type="button"
             onClick={toggleStatus}
             className={`p-2 rounded-full transition-colors ${
               !isActive

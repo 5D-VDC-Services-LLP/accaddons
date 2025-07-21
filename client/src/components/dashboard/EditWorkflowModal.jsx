@@ -128,7 +128,7 @@ const EditWorkflowModal = ({ workflow, onClose, onSave }) => {
       <div ref={modalRef} className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md animate-scale-in">
         <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
           <h3 className="text-xl font-semibold text-gray-900">Edit Workflow: {workflow.name}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 rounded-full p-1 transition-colors">
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 rounded-full p-1 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>

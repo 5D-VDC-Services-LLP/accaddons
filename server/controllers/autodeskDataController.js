@@ -281,6 +281,7 @@ const fetchIssueTypesAndRootCauses = async (req, res, next) => {
     const { autodeskId } = req.user;
     const { companyConfig } = req;
     const { projectId } = req.params;
+    const { module } = req.query;
 
     if (!companyConfig?.aps_client_id || !companyConfig?.aps_client_secret) {
       throw new CustomError('Tenant-specific Autodesk credentials are missing.', 400);
@@ -321,20 +322,29 @@ const fetchIssueTypesAndRootCauses = async (req, res, next) => {
 
     const projectRoles = Array.from(uniqueRolesMap.values());
 
-    res.status(200).json({
-      success: true,
-      data: {          
+    let responseData = {};
+    if (module === 'notifications') {
+      responseData = { "Issue Types": issueTypes }; // Only Issue Types
+    } else if (module === 'escalations') {
+      responseData = {
         "Due Date": [
-                    { "id": "overdue_1", "name": "Overdue (< 1 days)" },
-                    { "id": "overdue_3", "name": "Overdue (1 - 3 days)" },
-                    { "id": "overdue_7", "name": "Overdue (3 - 7 days)" },
-                    { "id": "overdue_critical", "name": "Critical (> 7 days)" },
-                  ],
+          { "id": "overdue_1", "name": "Overdue (< 1 days)" },
+          { "id": "overdue_3", "name": "Overdue (1 - 3 days)" },
+          { "id": "overdue_7", "name": "Overdue (3 - 7 days)" },
+          { "id": "overdue_critical", "name": "Critical (> 7 days)" },
+        ],
         "Assigned To User": projectUsers,
         "Assigned To Role": projectRoles,
         "Assigned To Companies": projectCompanies,
         "Issue Types": issueTypes,
-      }
+      };
+    } else {
+      responseData = { "Issue Types": issueTypes }; // default fallback
+    }
+
+    res.status(200).json({
+      success: true,
+      data: responseData
     });
 
   } catch (error) {

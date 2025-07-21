@@ -22,6 +22,7 @@ const WorkflowHeader = () => {
         <span className="text-gray-500 text-sm font-semibold">{projectName}</span>
       </div>
       <button
+              type='button'
               className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-sm font-medium text-white"
               onClick={() => setIsUserMenuOpen(true)}
               title="Open User Profile"

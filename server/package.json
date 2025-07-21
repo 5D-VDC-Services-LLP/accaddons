@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"nodemon server.js\" \" npm run dev --prefix ../client\"",
-    "start": "node server.js"
+    "start": "node server.js",
+    "load:auth": "artillery run load-tests/auth-callback-test.yml -- -v"
   },
   "keywords": [
     "multi-tenant",
