@@ -14,3 +14,15 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;             /* Chrome, Safari, Opera */
 }
+
+.react-tel-input .country-list {
+    top: auto !important; /* Allow 'bottom' to control vertical position */
+    bottom: 100% !important; /* Aligns the bottom of the dropdown with the top of the input */
+    transform: none !important; /* Resets any potential default transforms that might offset it */
+
+    /* Ensure it can scroll if content is too long */
+    max-height: 200px; /* Adjust as needed */
+    overflow-y: auto;
+
+    z-index: 1000; /* You might need to increase this value */
+}

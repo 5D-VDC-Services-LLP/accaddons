@@ -61,4 +61,7 @@ router.get('/check', authMiddleware.authenticateJWT, (req, res) => {
  */
 router.post('/logout', authController.logout);
 
+router.get('/pending-user-details', authController.getPendingUserDetails); // Add this line
+
+
 module.exports = router;

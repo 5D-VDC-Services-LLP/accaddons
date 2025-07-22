@@ -137,6 +137,7 @@ const autodeskCallback = async (req, res, next) => {
     const user = await userService.upsertUser(autodeskId, firstName, lastName, emailId); // Assume this returns full user
     if (!user.phone_number || !user.is_otp_verified) {
       console.log(`User ${autodeskId} has no phone number or is not OTP verified.`);
+
       req.session.pendingAutodeskLogin = {
         autodeskId,
         firstName,
@@ -145,7 +146,8 @@ const autodeskCallback = async (req, res, next) => {
         tenant: req.companyConfig.subdomain,
         redirectTo: originalFrontendRedirectUrl, // Store the original redirect URL here
       };
-      return res.redirect(`${originalFrontendRedirectUrl}?authStatus=pendingPhone`);
+        console.log(`Redirecting to pendingPhone: ${originalFrontendRedirectUrl}?authStatus=pendingPhone`); // ADD THIS LOG
+        return res.redirect(`${originalFrontendRedirectUrl}?authStatus=pendingPhone`);
     }
 
     // NEW: 5. Validate Autodesk Hubs and Projects access
@@ -311,16 +313,22 @@ const verifyOtpAndFinalizeLogin = async (req, res, next) => {
     // Clear the pending login session data
     delete req.session.pendingAutodeskLogin;
 
-    // Redirect the user to the intended frontend URL with authStatus=success
-    if (redirectTo) {
-      res.redirect(`${redirectTo}?authStatus=success`);
-    } else {
-      // Fallback if redirectTo somehow isn't available (shouldn't happen with the fix)
-      console.warn('redirectTo not found in session after OTP verification. Redirecting to default /workflows.');
-      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-      const defaultRedirectUrl = `${protocol}://${pendingAutodeskLogin.tenant}.${config.mainDomain}/workflows`;
-      res.redirect(`${defaultRedirectUrl}?authStatus=success`);
-    }
+    // // Redirect the user to the intended frontend URL with authStatus=success
+    // if (redirectTo) {
+    //   res.redirect(`${redirectTo}?authStatus=success`);
+    // } else {
+    //   // Fallback if redirectTo somehow isn't available (shouldn't happen with the fix)
+    //   console.warn('redirectTo not found in session after OTP verification. Redirecting to default /workflows.');
+    //   const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    //   const defaultRedirectUrl = `${protocol}://${pendingAutodeskLogin.tenant}.${config.mainDomain}/workflows`;
+    //   res.redirect(`${defaultRedirectUrl}?authStatus=success`);
+    // }
+    res.json({
+      success: true,
+      message: 'OTP verified successfully. Redirecting...',
+      redirectTo: `${redirectTo}?authStatus=success` // Send the target URL back to frontend
+    });
+
 
   } catch (error) {
     console.error('OTP Verification and Finalization Failed:', error);
@@ -374,6 +382,39 @@ const logout = (req, res, next) => {
   }
 };
 
+/**
+ * NEW: Endpoint for frontend to fetch pending Autodesk login details for phone verification.
+ * This should be a protected route, or at least have some session-based access control.
+ */
+const getPendingUserDetails = (req, res, next) => {
+  try {
+    const { pendingAutodeskLogin } = req.session;
+
+    console.log('pendingAutodeskLogin:', pendingAutodeskLogin);
+
+    if (!pendingAutodeskLogin) {
+      // If there's no pending login data, it means the session expired or was not set up correctly.
+      throw new CustomError('No pending login details found. Please try logging in again.', 404);
+    }
+
+    // Send back only the necessary user details, not the entire session object.
+    const userDetails = {
+      autodeskId: pendingAutodeskLogin.autodeskId,
+      firstName: pendingAutodeskLogin.firstName,
+      lastName: pendingAutodeskLogin.lastName,
+      emailId: pendingAutodeskLogin.emailId,
+      tenant: pendingAutodeskLogin.tenant,
+      redirectTo: pendingAutodeskLogin.redirectTo // Potentially useful for frontend context
+    };
+
+    console.log(userDetails)
+    res.json(userDetails);
+  } catch (error) {
+    console.error('Error fetching pending user details:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   loginWithAutodesk,
   autodeskCallback,
@@ -382,4 +423,5 @@ module.exports = {
   submitPhoneAndSendOTP,
   verifyOtpAndFinalizeLogin,
   logout,
+  getPendingUserDetails,
 };

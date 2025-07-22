@@ -277,14 +277,17 @@ export const useAutodeskAuth = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get('authStatus');
     const message = urlParams.get('message');
+    console.log('useAutodeskAuth - Detected authStatus:', status); // Very important log
+  console.log('useAutodeskAuth - Current pathname:', window.location.pathname); // Also important
 
     if (status === 'error') {
       setAuthStatus('error');
       setErrorMsg(decodeURIComponent(message || 'Authentication failed.'));
       navigate(window.location.pathname, { replace: true });
     } else if (status === 'pendingPhone') {
-      setAuthStatus('pendingPhone');
-      navigate('/verify-phone', { replace: true });
+      console.log('useAutodeskAuth - Navigating to /verify-phone due to pendingPhone status.');
+    setAuthStatus('pendingPhone');
+    navigate('/verify-phone', { credentials: 'include', replace: true });
     } else if (window.location.pathname === '/workflows' && status === 'success') {
       console.log('✅ OAuth redirect success. Fetching initial projects...');
       fetchInitialProjects();
