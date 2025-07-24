@@ -19,7 +19,7 @@ const NotificationHeader = () => {
         <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors duration-200">
           <span className="text-white text-xs font-medium hover:text-black transition-colors duration-200"><Plus /></span>
         </div>
-        <span className="text-gray-500 text-sm font-semibold">{projectName}</span>
+        <span className="text-gray-500 text-sm font-medium">{projectName}</span>
       </div>
       <button
               type='button'

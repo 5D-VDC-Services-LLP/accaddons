@@ -13,6 +13,7 @@ const companyRoutes = require('./routes/companyRoutes');
 const workflowRoutes = require('./routes/workflowRoutes');
 const autodeskDataRoutes = require('./routes/autodeskDataRoutes'); // NEW: Import new routes
 const escalationRoutes = require('./routes/escalationRoutes'); // NEW: Import new routes
+const accRoutes = require('./routes/accRoutes');
 // const { scheduleEscalationSender } = require('./cron/sendEscalationCron');
 const { scheduleAggregationCron } = require('./services/escalationAggregatorService');
 
@@ -59,6 +60,8 @@ app.use('/api/user', userRoutes); // Protected routes using JWT, also leverage t
 app.use('/api/workflows', workflowRoutes);
 app.use('/api/autodesk', autodeskDataRoutes);
 app.use('/api/escalation', escalationRoutes);
+
+app.use('/api', accRoutes);
 
 // Centralized Error Handling Middleware (must be last)
 app.use(errorHandler);

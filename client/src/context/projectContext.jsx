@@ -4,6 +4,8 @@ const ProjectContext = createContext();
 
 export const ProjectProvider = ({ children }) => {
   const [projects, setProjectsState] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
+  const [error, setError] = useState(null); // New error state
 
   // Load from sessionStorage
   useEffect(() => {

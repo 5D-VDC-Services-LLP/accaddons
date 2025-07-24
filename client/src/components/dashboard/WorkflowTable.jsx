@@ -1,28 +1,22 @@
 // src/components/dashboard/WorkflowTable.jsx
-import React from 'react';
-import WorkflowRow from './WorkflowRow'; // Path to the renamed WorkflowRow.jsx
-import EditWorkflowModal from './EditWorkflowModal'; // Path to the newly created EditWorkflowModal.jsx
-import ConfirmationModal from '../ConfirmationModal';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import WorkflowRow from './WorkflowRow';
+import ConfirmationModal from '../ConfirmationModal'; // Assuming this path is correct
 
 const WorkflowTable = ({
   workflows,
   isLoading,
   error,
-  onEditWorkflow,
+  onEditWorkflow, // This prop will now trigger navigation
   onDeleteWorkflow,
   workflowType,
   onUpdateWorkflowStatus,
-  isEditModalOpen,
-  setIsEditModalOpen,
-  editingWorkflow,
-  handleSaveEditedWorkflow,
-  // You might need a way to refetch workflows after delete from parent
-  onWorkflowsUpdated // New prop for refetching or updating parent state
+  // Removed isEditModalOpen, setIsEditModalOpen, editingWorkflow, handleSaveEditedWorkflow
+  onWorkflowsUpdated // Still useful for refetching after delete
 }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [workflowToDelete, setWorkflowToDelete] = useState(null);
-  const [deleteError, setDeleteError] = useState(null); // State for delete errors
+  const [deleteError, setDeleteError] = useState(null);
 
   // Function to open the delete confirmation modal
   const handleDeleteWorkflow = (workflowId) => {
@@ -30,21 +24,22 @@ const WorkflowTable = ({
     if (workflow) {
       setWorkflowToDelete(workflow);
       setIsDeleteModalOpen(true);
-      setDeleteError(null); // Clear previous errors
+      setDeleteError(null);
     }
   };
 
-    const confirmDeleteWorkflow = async () => {
-        if (!workflowToDelete) return;
-        try {
-            await onDeleteWorkflow(workflowToDelete.workflow_id);
-
-            setIsDeleteModalOpen(false);
-            setWorkflowToDelete(null);
-        } catch (err) {
-            setDeleteError(`Failed to delete workflow: ${err.message || "Unknown error"}`);
-        }
-    };
+  const confirmDeleteWorkflow = async () => {
+    if (!workflowToDelete) return;
+    try {
+      await onDeleteWorkflow(workflowToDelete.workflow_id);
+      setIsDeleteModalOpen(false);
+      setWorkflowToDelete(null);
+      // Optionally, trigger a refetch of workflows in the parent component
+      onWorkflowsUpdated?.();
+    } catch (err) {
+      setDeleteError(`Failed to delete workflow: ${err.message || "Unknown error"}`);
+    }
+  };
 
   const cancelDelete = () => {
     setIsDeleteModalOpen(false);
@@ -79,7 +74,7 @@ const WorkflowTable = ({
       <p className="text-center text-gray-500 py-8">
         No notification workflows found for this project.
         <br />
-        Use the <span className='font-semibold text-gray-600'>"+ Create"</span>  button to add a new one
+        Use the <span className='font-semibold text-gray-600'>"+ Create"</span> button to add a new one
       </p>
     );
   }
@@ -102,9 +97,11 @@ const WorkflowTable = ({
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
               Module
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-              Frequency
-            </th>
+            {workflowType === 'escalation' && (
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                Frequency
+              </th>
+            )}
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
@@ -116,24 +113,16 @@ const WorkflowTable = ({
         <tbody className="bg-white divide-y divide-gray-200">
           {workflows.map((workflow) => (
             <WorkflowRow
-              key={workflow._id}
+              key={workflow.workflow_id} // Use workflow_id as key
               workflow={workflow}
-              onEditWorkflow={onEditWorkflow}
+              workflowType={workflowType}
+              onEditWorkflow={onEditWorkflow} // This will now be the navigate function from parent
               onDeleteWorkflow={handleDeleteWorkflow}
               onUpdateWorkflowStatus={onUpdateWorkflowStatus}
             />
           ))}
         </tbody>
       </table>
-
-      {/* Render Edit Workflow Modal conditionally */}
-      {isEditModalOpen && editingWorkflow && (
-        <EditWorkflowModal
-          workflow={editingWorkflow}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleSaveEditedWorkflow}
-        />
-      )}
 
       {/* Render Delete Confirmation Modal */}
       <ConfirmationModal
@@ -143,7 +132,7 @@ const WorkflowTable = ({
           deleteError ? (
             <p className="text-red-600">{deleteError}</p>
           ) : (
-            `Are you sure you want to delete the workflow ${workflowToDelete?.workflow_name}? This action cannot be undone.`
+            `Are you sure you want to delete the workflow "${workflowToDelete?.workflow_name}"? This action cannot be undone.`
           )
         }
         onConfirm={confirmDeleteWorkflow}

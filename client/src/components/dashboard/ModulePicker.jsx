@@ -26,25 +26,25 @@ const ModulePicker = ({ modules, selected, onSelect }) => {
     <div ref={pickerRef} className="relative inline-block">
       {/* Button */}
       <div
-        className="flex border border-gray-300 rounded-md justify-between overflow-hidden cursor-pointer select-none w-30"
+        className="flex border border-gray-200 rounded-md justify-between overflow-hidden cursor-pointer select-none w-30"
         onClick={handleToggle}
       >
         {/* Left colored block */}
-        <div className="bg-blue-200 text-blue-900 flex items-center justify-center rounded-md p-2 m-1">
+        <div className="bg-gray-300 text-black flex items-center justify-center rounded-md p-1 m-1">
           <Settings size={20} />
         </div>
-        <div className="flex justify-center items-center text-gray-700 font-medium px-1">
+        <div className="flex justify-center items-center text-gray-700 font-normal px-1">
             {selected?.name || "Select"}
         </div>
         {/* Right dropdown arrow */}
         <div className="bg-white flex items-center justify-center p-1">
-          {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </div>
       </div>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+        <div className="absolute z-10 mt-1 w-full bg-gray-50 border border-gray-100 rounded-md shadow-sm">
           {modules.map((module) => (
             <div
               key={module.id}

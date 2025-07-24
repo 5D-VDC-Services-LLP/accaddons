@@ -72,42 +72,84 @@ const getNotificationWorkflowsByProject = async (req, res, next) => {
     }
 };
 
+const getNotificationWorkflowsById = async (req, res, next) => {
+  try {
+    const { workflow_id } = req.params;
+    const mongoUri = req.companyConfig?.mongodb_uri;
+
+    if (!mongoUri || !workflow_id) {
+      throw new CustomError('Workflow ID or tenant configuration missing.', 400);
+    }
+
+    const workflow = await notificationWorkflowService.getNotificationWorkflowsById(mongoUri, workflow_id);
+
+    if (!workflow) {
+      console.warn(`Workflow with ID ${workflow_id} not found.`);
+      throw new CustomError('Workflow not found.', 404);
+    }
+
+    res.status(200).json(workflow);
+  } catch (error) {
+    console.error('Controller: Error fetching workflow by ID:', error);
+    next(error);
+  }
+};
+
 /**
  * Updates status, channels, or due_in for a specific notification workflow.
  * Only allows changing 'status', 'channels', or 'due_in'.
  */
 const updateNotificationWorkflow = async (req, res, next) => {
-    try {
-        const { workflow_id } = req.params;
-        const mongoUri = req.companyConfig?.mongodb_uri; // Assuming the same Mongo URI
+  try {
+    const { workflow_id } = req.params;
+    const mongoUri = req.companyConfig?.mongodb_uri;
 
-        if (!mongoUri || !workflow_id) {
-            throw new CustomError('Notification workflow ID or tenant configuration missing.', 400);
-        }
-
-        // Allowed fields for update in notification workflows
-        const allowedFields = ['status', 'channels', 'due_in'];
-        const updatePayload = {};
-
-        for (const field of allowedFields) {
-            if (field in req.body) {
-                updatePayload[field] = req.body[field];
-            }
-        }
-
-        if (Object.keys(updatePayload).length === 0) {
-            throw new CustomError('No valid fields provided for notification workflow update (allowed: status, channels, due_in).', 400);
-        }
-
-        const updatedWorkflow = await notificationWorkflowService.updateNotificationWorkflow(mongoUri, workflow_id, updatePayload);
-        res.status(200).json(updatedWorkflow);
-    } catch (error) {
-        console.error('Error updating notification workflow:', error);
-        if (error instanceof CustomError) {
-            return res.status(error.statusCode).json({ message: error.message, details: error.details });
-        }
-        next(error);
+    if (!mongoUri || !workflow_id) {
+      throw new CustomError('Notification Workflow ID or tenant configuration missing.', 400);
     }
+
+    // Destructure all potential update fields from req.body.
+    // Use default undefined to ensure fields not sent are not treated as null.
+    const {
+      workflow_name,
+      channels,
+      frequency, // Expected top-level field, consistent with createWorkflow
+      filters,
+      status // Assuming 'status' can also be updated (e.g., active/paused)
+    } = req.body;
+
+    const updatePayload = {};
+
+    // Conditionally add fields to updatePayload if they are provided (not undefined)
+    // This allows for partial updates (PATCH requests).
+    if (workflow_name !== undefined) {
+      updatePayload.workflow_name = workflow_name;
+    }
+    if (channels !== undefined) {
+      updatePayload.channels = channels;
+    }
+    if (frequency !== undefined) {
+      updatePayload.frequency = frequency;
+    }
+    if (filters !== undefined) {
+      updatePayload.filters = filters;
+    }
+    if (status !== undefined) {
+      updatePayload.status = status;
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      throw new CustomError('No valid fields provided for update.', 400);
+    }
+
+    // console.log('Update Payload sent to service:', updatePayload); // For debugging
+
+    const updatedWorkflow = await notificationWorkflowService.updateNotificationWorkflow(mongoUri, workflow_id, updatePayload);
+    res.status(200).json(updatedWorkflow);
+  } catch (error) {
+    console.error('Controller: Error updating workflow:', error);
+    next(error);
+  }
 };
 
 /**
@@ -136,6 +178,7 @@ const deleteNotificationWorkflow = async (req, res, next) => {
 module.exports = {
     createNotificationWorkflow,
     getNotificationWorkflowsByProject,
+    getNotificationWorkflowsById,
     updateNotificationWorkflow,
     deleteNotificationWorkflow
 };

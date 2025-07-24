@@ -32,8 +32,9 @@ export const useWorkflowManagement = (projectId, workflowTypeInput) => {
         setIsLoadingWorkflows(true);
         setWorkflowError(null);
         try {
+            console.log("lalalalalalalal")
+            console.log("Fetching workflows for project:", projectId, "Type:", workflowType);
             let url = `${API_BASE_URL}/api/workflows/${workflowType}-workflows/${projectId}`
-            console.log(url)
             const response = await axios.get(url, {
                 withCredentials: true,
             });

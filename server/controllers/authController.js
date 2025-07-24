@@ -150,17 +150,6 @@ const autodeskCallback = async (req, res, next) => {
         return res.redirect(`${originalFrontendRedirectUrl}?authStatus=pendingPhone`);
     }
 
-    // NEW: 5. Validate Autodesk Hubs and Projects access
-    let initialProjectsList = [];
-    try {
-      initialProjectsList = await getAndValidateAutodeskProjectAccess(autodeskId, req.companyConfig);
-      console.log(`Autodesk Project Access validated for user ${autodeskId}. Found ${initialProjectsList.length} projects.`);
-    } catch (projectAccessError) {
-      // If validation fails, redirect with an error message
-      console.error('Autodesk Project Access Validation Failed:', projectAccessError.message);
-      return res.redirect(`${originalFrontendRedirectUrl}?authStatus=error&message=${encodeURIComponent(projectAccessError.message)}`);
-    }
-
     // 6. Generate your internal JWT
     const internalJwtToken = jwt.generateToken({
       autodeskId: autodeskId,
@@ -179,17 +168,28 @@ const autodeskCallback = async (req, res, next) => {
       sameSite: 'Lax', // Or 'Strict' depending on your needs
       maxAge: 14 * 24 * 60 * 60 * 1000, // 7 days, adjust as needed
       // Conditionally set the domain attribute
-      ...(process.env.NODE_ENV === 'production' && { domain: `.${config.mainDomain}` }) // Allow cookie across subdomains for multi-tenancy
+      // ...(process.env.NODE_ENV === 'production' && { domain: `.${config.mainDomain}` }) // Allow cookie across subdomains for multi-tenancy
     });
-
-    // NEW: 8. Store the projects list in the session for the frontend to retrieve once.
-    req.session.initialAutodeskProjects = initialProjectsList;
-    console.log('Initial projects list stored in session.');
 
     // 9. Redirect the user back to the appropriate frontend URL for their tenant.
     // The protocol and subdomain logic should be handled by the originalFrontendRedirectUrl
     // if it's coming from the frontend correctly.
     res.redirect(`${originalFrontendRedirectUrl}?authStatus=success`);
+
+    // NEW: 5. Validate Autodesk Hubs and Projects access
+    let initialProjectsList = [];
+    try {
+      initialProjectsList = await getAndValidateAutodeskProjectAccess(autodeskId, req.companyConfig);
+      console.log(`Autodesk Project Access validated for user ${autodeskId}. Found ${initialProjectsList.length} projects.`);
+    } catch (projectAccessError) {
+      // If validation fails, redirect with an error message
+      console.error('Autodesk Project Access Validation Failed:', projectAccessError.message);
+      return res.redirect(`${originalFrontendRedirectUrl}?authStatus=error&message=${encodeURIComponent(projectAccessError.message)}`);
+    }
+
+    // NEW: 8. Store the projects list in the session for the frontend to retrieve once.
+    req.session.initialAutodeskProjects = initialProjectsList;
+    console.log('Initial projects list stored in session.');
 
   } catch (error) {
     console.error('Autodesk OAuth Callback Error:', error);
@@ -301,10 +301,10 @@ const verifyOtpAndFinalizeLogin = async (req, res, next) => {
 
     res.cookie('jwt', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
       maxAge: 14 * 24 * 60 * 60 * 1000,
-      ...(process.env.NODE_ENV === 'production' && { domain: `.${config.mainDomain}` })
+      // ...(process.env.NODE_ENV === 'production' && { domain: `.${config.mainDomain}` })
     });
 
     // Get the redirect URL stored in the session
@@ -347,7 +347,7 @@ const logout = (req, res, next) => {
     // Clear the JWT cookie
     res.clearCookie('jwt', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
       // Ensure the domain matches the one set during login if applicable
       // Use config.mainDomain to ensure it clears for all subdomains

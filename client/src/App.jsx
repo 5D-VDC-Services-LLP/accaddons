@@ -10,12 +10,14 @@ import Dashboard from './pages/Dashboard'
 import VerifyPhone from './pages/VerifyPhone';
 import { AuthProvider } from './context/authContext'
 import ProtectedRoute from './components/ProtectedRoute'
-import WorkflowConfig from './pages/WorkflowConfig'
+import WorkflowConfig from './pages/WorkflowConfig' // Assuming this is your config/edit page
 import NotificationConfig from './pages/NotificationConfig'
+import EditWorkflowDispatcher from './pages/EditWorkflowDispatcher'; // 👈 1. Import the new component
+
 
 
 const AppContent = () => {
-  const { authStatus, currentSubdomain } = useAutodeskAuth(); 
+  const { authStatus, currentSubdomain } = useAutodeskAuth();
   const RootComponent = currentSubdomain ? CompanyLandingPage : HomePage;
 
   return (
@@ -61,7 +63,38 @@ const AppContent = () => {
             }
           />
 
-        </Routes>
+            {/*
+              <Route
+            path="/workflows/:projectId/:moduleType/edit-workflow/:workflow_id"
+            element={
+              <ProtectedRoute>
+                <WorkflowConfig />
+              </ProtectedRoute>
+            }
+          />
+
+              <Route
+            path="/workflows/:projectId/:moduleType/edit-workflow/:workflow_id"
+            element={
+              <ProtectedRoute>
+                <NotificationConfig />
+              </ProtectedRoute>
+            }
+          />
+       */}
+
+          {/* --- DYNAMIC EDIT ROUTE --- */}
+        {/* 👇 3. ADD this single route to handle all edits */}
+        <Route
+          path="/workflows/:projectId/:moduleType/edit-workflow/:workflow_id"
+          element={
+            <ProtectedRoute>
+              <EditWorkflowDispatcher />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+
     </div>
   )
 };

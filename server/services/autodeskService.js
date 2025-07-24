@@ -15,13 +15,6 @@ const OAUTH_TOKEN_URL = 'https://developer.api.autodesk.com/authentication/v2/to
  * @returns {Promise<Object>} - An object containing access_token and refresh_token.
  */
 const getApsTokens = async (clientId, clientSecret, callbackUrl, code) => {
-  if (process.env.NODE_ENV === 'qa') {
-    return {
-      access_token: "eyJhbGciOiJSUzI1NiIsImtpZCI6IlhrUFpfSmhoXzlTYzNZS01oRERBZFBWeFowOF9SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiLCJhY2NvdW50OnJlYWQiXSwiY2xpZW50X2lkIjoiREFJRTV1OVJvU3B1bjFSZ0dHblA1TGVGeVBucXhzVVoiLCJpc3MiOiJodHRwczovL2RldmVsb3Blci5hcGkuYXV0b2Rlc2suY29tIiwiYXVkIjoiaHR0cHM6Ly9hdXRvZGVzay5jb20iLCJqdGkiOiJmMjIwYVJ6Z1ZxajN2U2I3SnFncmFsS3pKcFI0RHJiSnNkOTBzRnBYeXpaanNxN2drUGN2VXlqOGNOQzAybFl3IiwidXNlcmlkIjoiN0xOMlFKNVpRRVdDQjcyQyIsImV4cCI6MTc1MjU2NjIwOX0.dcPvMNRWv6tWwQiEEP5_BjakAlHqZw-WPXQ51yIu7QHRhIfH8e7jXm9zrhuYw715jpQkVaHVuBpdsneT3tPTHH227ku5WNgLZ8ASyD-ubOW87JWK5NgvsFA4jVhh6MmmAa5-DlrGLiLKDbDlDMPBavo2adXH1yliVlqrvZbfGRqSnxi168LBN9IsqDUWv3jw3vF0MoWSJssU2ScoV6PoJfPePsjCccv_6sjyhYZ5jwUQO3kWAv29rwoFGHPyl09-XrnZ3ltJri3rX9Sn9lCIpN2W626xJVWcauGJ5WvwNL13Cs9cZ2LsC8znn8jHnf7voydfmHJ38oad_rz_n0Djuw",
-      refresh_token: "ue1c1.PICpepeTCK0H8V7wFn8MmUj9Q3OePoWHk69Tu6Fqic",
-      expires_in: 3600
-    };
-  }
   try {
     const response = await axios.post(config.autodesk.tokenUrl,
       new URLSearchParams({
@@ -113,7 +106,7 @@ const getAutodeskHubs = async (apsAccessToken) => {
 const getAutodeskProjectsInHub = async (apsAccessToken, hubId) => {
   const baseUrl = `https://developer.api.autodesk.com/construction/admin/v1/accounts/${hubId}/projects`;
   let url = baseUrl;
-  let params = { fields: 'name,classification,status' };
+  let params = { fields: 'name,classification,status', limit: 200 };
   const headers = { Authorization: `Bearer ${apsAccessToken}` };
   const allProjects = [];
 
@@ -172,8 +165,8 @@ const getAutodeskProjectsInHub = async (apsAccessToken, hubId) => {
 const getAutodeskProjectUsers = async (apsAccessToken, projectId) => {
   let url = `https://developer.api.autodesk.com/construction/admin/v1/projects/${projectId}/users`;
   const params = {
-    fields: 'autodeskId,email,name,roles', // Restrict response
-    limit: 100, // Increase limit to reduce pagination loops (max = 100)
+    fields: 'autodeskId,email,name,roles',
+    limit: 200,
   };
   const headers = {
     Authorization: `Bearer ${apsAccessToken}`,
@@ -430,15 +423,15 @@ const getAutodeskIssueRootCauses = async (apsAccessToken, projectId) => {
  * @returns {Promise<Array>} - Array of workflow objects with selected fields.
  */
 
-const getAutodeskReviewWorkflows = async (apsAccessToken, projectId) => {
-  const baseUrl = `https://developer.api.autodesk.com/construction/reviews/v1/projects/${projectId}/workflows`;
+const getAutodeskReviewWorkflows = async (apsAccessToken, projectId, autodeskId) => {
+  const baseUrl = `https://developer.api.autodesk.com/construction/reviews/v1/projects/${projectId}/reviews`;
   const headers = {
     Authorization: `Bearer ${apsAccessToken}`,
-    'Content-Type': 'application/json',
+    'x-user-id': autodeskId,
   };
 
   const allWorkflows = [];
-  let nextUrl = `${baseUrl}?limit=50&offset=0&filter[status]=ACTIVE`;
+  let nextUrl = `${baseUrl}?limit=50&offset=0`;
 
   try {
     while (nextUrl) {

@@ -17,7 +17,7 @@ const workflowSchema = new mongoose.Schema({
     validate: [arr => arr.length > 0, 'At least one channel is required']
   },
 
-  module: { type: String, enum: ['issues', 'forms', 'review'], required: true },
+  module: { type: String, enum: ['issues', 'forms', 'reviews'], required: true },
   status: { type: String, enum: ['active', 'paused'], default: 'active' },
 
   frequency: {
@@ -72,6 +72,7 @@ const getWorkflowModel = (connection) => {
 };
 
 const createWorkflow = async (mongoUri, workflowData) => {
+  console.log(workflowData);
   try {
     const connection = await getMongoDBConnection(mongoUri);
     const Workflow = getWorkflowModel(connection);
@@ -107,29 +108,30 @@ const getWorkflowsByProject = async (mongoUri, projectId, module = null, status 
   }
 };
 
-const updateWorkflowStatusOrChannel = async (mongoUri, workflowId, updates = {}) => {
+const updateWorkflow = async (mongoUri, workflowId, updates = {}) => {
+  console.log("Service: updateWorkflow received updates:", updates);
   try {
     const connection = await getMongoDBConnection(mongoUri);
     const Workflow = getWorkflowModel(connection);
 
-    const allowedFields = ['status', 'channels', 'frequency'];
-    const updateFields = Object.keys(updates);
-
-    for (const field of updateFields) {
-      if (!allowedFields.includes(field)) {
-        throw new CustomError(`Update not allowed for field: ${field}`, 400);
-      }
-    }
-
+    // Mongoose will automatically handle validation based on schema
+    // and will ignore fields not defined in the schema.
+    // The controller is responsible for filtering allowed fields from req.body.
     const updated = await Workflow.findOneAndUpdate(
-      { workflow_id: workflowId },
-      { ...updates, updated_at: Date.now() },
-      { new: true }
+      { workflow_id: workflowId }, // Find by workflow_id (UUID)
+      { $set: { ...updates, updated_at: Date.now() } }, // Apply updates and set updated_at
+      { new: true, runValidators: true } // Return the updated document and run schema validators
     );
 
+    if (!updated) {
+      throw new CustomError('Workflow not found for update.', 404);
+    }
     return updated;
   } catch (error) {
-    console.error(`Failed to update workflow '${workflowId}':`, error);
+    console.error(`Service: Failed to update workflow '${workflowId}':`, error);
+    if (error.name === 'ValidationError') {
+      throw new CustomError(`Validation Error: ${error.message}`, 400, error.errors);
+    }
     throw new CustomError('Workflow update failed.', 500);
   }
 };
@@ -163,7 +165,8 @@ const getWorkflowById = async (mongoUri, workflowId) => {
     if (!workflow) {
       throw new CustomError('Workflow not found.', 404);
     }
-
+    console.log(`Fetched workflow: ${workflow.workflow_name} (${workflow.workflow_id})`);
+    console.log(workflow)
     return workflow;
   } catch (error) {
     console.error(`Failed to fetch workflow '${workflowId}':`, error);
@@ -188,7 +191,7 @@ const getAllWorkflows = async (mongoUri) => {
 module.exports = {
   createWorkflow,
   getWorkflowsByProject,
-  updateWorkflowStatusOrChannel,
+  updateWorkflow,
   deleteWorkflow,
   getWorkflowById,
   getAllWorkflows,

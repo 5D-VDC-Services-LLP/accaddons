@@ -30,7 +30,6 @@ const createWorkflow = async (req, res, next) => {
 
     const frequencyFromPayload = schedule && Array.isArray(schedule.frequency) ? schedule.frequency : [];
 
-
     const newWorkflow = await workflowService.createWorkflow(mongoUri, {
       workflow_name,
       project_id,
@@ -41,7 +40,8 @@ const createWorkflow = async (req, res, next) => {
       frequency: frequencyFromPayload,
       created_by
     });
-
+    
+    console.log(newWorkflow)
     res.status(201).json(newWorkflow);
   } catch (error) {
     console.error('Workflow creation error:', error);
@@ -72,11 +72,7 @@ const getWorkflowsByProject = async (req, res, next) => {
   }
 };
 
-/**
- * Updates workflow status or channels for a specific workflow.
- * Only allows changing 'status' or 'channels'.
- */
-const updateWorkflowStatusOrChannel = async (req, res, next) => {
+const getWorkflowById = async (req, res, next) => {
   try {
     const { workflow_id } = req.params;
     const mongoUri = req.companyConfig?.mongodb_uri;
@@ -85,26 +81,77 @@ const updateWorkflowStatusOrChannel = async (req, res, next) => {
       throw new CustomError('Workflow ID or tenant configuration missing.', 400);
     }
 
-    const allowedFields = ['status', 'channels', 'frequency'];
+    const workflow = await workflowService.getWorkflowById(mongoUri, workflow_id);
+
+    if (!workflow) {
+      console.warn(`Workflow with ID ${workflow_id} not found.`);
+      throw new CustomError('Workflow not found.', 404);
+    }
+
+    res.status(200).json(workflow);
+  } catch (error) {
+    console.error('Controller: Error fetching workflow by ID:', error);
+    next(error);
+  }
+};
+
+/**
+ * Updates workflow status or channels for a specific workflow.
+ * Only allows changing 'status' or 'channels'.
+ */
+const updateWorkflow = async (req, res, next) => {
+  try {
+    const { workflow_id } = req.params;
+    const mongoUri = req.companyConfig?.mongodb_uri;
+
+    if (!mongoUri || !workflow_id) {
+      throw new CustomError('Workflow ID or tenant configuration missing.', 400);
+    }
+
+    // Destructure all potential update fields from req.body.
+    // Use default undefined to ensure fields not sent are not treated as null.
+    const {
+      workflow_name,
+      channels,
+      escalate_to,
+      frequency, // Expected top-level field, consistent with createWorkflow
+      filters,
+      status // Assuming 'status' can also be updated (e.g., active/paused)
+    } = req.body;
+
     const updatePayload = {};
 
-    for (const field of allowedFields) {
-      if (field in req.body) {
-        if (field === 'frequency' && req.body[field] && typeof req.body[field] === 'object' && req.body[field].frequency) {
-          updatePayload[field] = req.body[field].frequency;
-        }
-        updatePayload[field] = req.body[field];
-      }
+    // Conditionally add fields to updatePayload if they are provided (not undefined)
+    // This allows for partial updates (PATCH requests).
+    if (workflow_name !== undefined) {
+      updatePayload.workflow_name = workflow_name;
+    }
+    if (channels !== undefined) {
+      updatePayload.channels = channels;
+    }
+    if (escalate_to !== undefined) {
+      updatePayload.escalate_to = escalate_to;
+    }
+    if (frequency !== undefined) {
+      updatePayload.frequency = frequency;
+    }
+    if (filters !== undefined) {
+      updatePayload.filters = filters;
+    }
+    if (status !== undefined) { // Add status field if it's provided
+      updatePayload.status = status;
     }
 
     if (Object.keys(updatePayload).length === 0) {
       throw new CustomError('No valid fields provided for update.', 400);
     }
 
-    const updatedWorkflow = await workflowService.updateWorkflowStatusOrChannel(mongoUri, workflow_id, updatePayload);
+    // console.log('Update Payload sent to service:', updatePayload); // For debugging
+
+    const updatedWorkflow = await workflowService.updateWorkflow(mongoUri, workflow_id, updatePayload);
     res.status(200).json(updatedWorkflow);
   } catch (error) {
-    console.error('Error updating workflow status or channel:', error);
+    console.error('Controller: Error updating workflow:', error);
     next(error);
   }
 };
@@ -122,17 +169,17 @@ const deleteWorkflow = async (req, res, next) => {
         res.status(200).json(result);
     } catch (error) {
         console.error('Error deleting workflow in controller:', error);
-        // Use next(error) to pass it to a global error handler, or handle here
         if (error instanceof CustomError) {
             return res.status(error.statusCode).json({ message: error.message, details: error.details });
         }
-        next(error); // Pass other errors to generic handler
+        next(error);
     }
 };
 
 module.exports = {
   createWorkflow,
   getWorkflowsByProject,
-  updateWorkflowStatusOrChannel,
+  getWorkflowById,
+  updateWorkflow,
   deleteWorkflow
 };

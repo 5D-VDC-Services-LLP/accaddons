@@ -241,32 +241,32 @@ const fetchProjectCompany = async (req, res, next) => {
   }
 };
 
-const fetchProjectRole = async (req, res, next) => {
-  try {
-    const { companyConfig } = req;
+// const fetchProjectRole = async (req, res, next) => {
+//   try {
+//     const { companyConfig } = req;
 
-    if (!companyConfig || !companyConfig.aps_client_id || !companyConfig.aps_client_secret) {
-      throw new CustomError(
-        'Tenant-specific Autodesk credentials not found. Please access via a valid tenant subdomain.',
-        400
-      );
-    }
-    const accessToken = await getValid2leggedApsAccessToken(companyConfig);
-    const { companyId } = req.params;
+//     if (!companyConfig || !companyConfig.aps_client_id || !companyConfig.aps_client_secret) {
+//       throw new CustomError(
+//         'Tenant-specific Autodesk credentials not found. Please access via a valid tenant subdomain.',
+//         400
+//       );
+//     }
+//     const accessToken = await getValid2leggedApsAccessToken(companyConfig);
+//     const { companyId } = req.params;
 
-    if (!companyId) {
-      throw new CustomError(
-        'No Company ID found',
-        500
-      )
-    }
-    accountId = `b.${companyConfig.hubId}` 
-    const projects = await autodeskService.getAutodeskProjectCompany(accessToken, companyConfig.hub_id, companyId);
-    res.json({ success: true, data: projects });
-  } catch (error) {
-    next(error);
-  }
-};
+//     if (!companyId) {
+//       throw new CustomError(
+//         'No Company ID found',
+//         500
+//       )
+//     }
+//     accountId = `b.${companyConfig.hubId}` 
+//     const projects = await autodeskService.getAutodeskProjectCompany(accessToken, companyConfig.hub_id, companyId);
+//     res.json({ success: true, data: projects });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 /**
  * Controller: Fetch issue types and root causes for a given Autodesk project.
@@ -383,10 +383,12 @@ const fetchReviewWorkflows = async (req, res, next) => {
     const accessToken2Legged = await getValid2leggedApsAccessToken(companyConfig);
 
     const [reviewWorkflows, projectCompanies, projectUsers] = await Promise.all([
-      autodeskService.getAutodeskReviewWorkflows(accessToken, projectId),
+      autodeskService.getAutodeskReviewWorkflows(accessToken2Legged, projectId, autodeskId),
       autodeskService.getAutodeskProjectCompany(accessToken2Legged, companyConfig?.hub_id, projectId),
       autodeskService.getAutodeskProjectUsers(accessToken, projectId)
     ]);
+
+    console.log("Review Workflows is", reviewWorkflows)
 
     // Extract unique roles
     const uniqueRolesMap = new Map();

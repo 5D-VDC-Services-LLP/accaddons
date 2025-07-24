@@ -1,0 +1,24 @@
+{
+  "projects": [
+    {
+      "id": "5f28e929-3180-45e2-9500-e0c1054a64a7",
+      "name": "Test Project"
+    },
+    {
+      "id": "0e08db22-4ec0-40ce-a695-f2bd73e4510c",
+      "name": "Standard training"
+    },
+    {
+      "id": "75525f24-cbdc-4e8f-b5d8-5514093b1671",
+      "name": "Sample Residential"
+    },
+    {
+      "id": "9cf12770-7da4-4d45-a9e8-cf9d0545439a",
+      "name": "Internal Training"
+    },
+    {
+      "id": "6f910c93-021e-4fa3-ba49-b0208fddc0d2",
+      "name": "Trainer Central"
+    }
+  ]
+}

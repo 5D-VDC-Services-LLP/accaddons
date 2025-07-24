@@ -2,21 +2,21 @@
 import React, { useState, useEffect } from 'react';
 import { useAutodeskAuth } from '../utils/useAutodeskAuth';
 import { getBackendUrl } from '../utils/urlUtils';
-import DLF_Logo from '../assets/companylogos/dlf.svg'; // Example logo, replace with your actual logo
-import PS_Logo from '../assets/companylogos/ps.svg'; // Example logo, replace with your actual logo
-import logo from '../assets/companylogos/5dvdc.svg'; // Example logo, replace with
+import DLF_Logo from '../assets/companylogos/dlf.svg'; 
+import PS_Logo from '../assets/companylogos/ps.svg';
+import logo from '../assets/companylogos/5dvdc.svg'; 
 
-import DLF_bg from '../assets/backgroundImgs/dlf.svg'; // Example logo, replace with your actual logo
-import PS_bg from '../assets/backgroundImgs/ps.svg'; // Example logo, replace with your actual logo
-import bg from '../assets/backgroundImgs/5dvdc.svg'; // Example logo, replace with
+import DLF_bg from '../assets/backgroundImgs/dlf.svg'; 
+import PS_bg from '../assets/backgroundImgs/ps.svg'; 
+import bg from '../assets/backgroundImgs/5dvdc.svg';
 
-// Placeholder for Autodesk logo (you can replace this with your actual SVG)
-import ADSK_logo from '../assets/ADSK_light.svg'; // Make sure this path is correct
+import ADSK_logo from '../assets/ADSK_light.svg'; 
+import { BarLoader } from 'react-spinners';
 
 const logoMap = {
   DLF_Logo: DLF_Logo,
   PS_Logo: PS_Logo,
-  logo: logo, // or whatever key your database uses
+  logo: logo, 
 };
 
 const backgroundMap = {
@@ -25,13 +25,10 @@ const backgroundMap = {
   bg: bg,
 };
 
-// Define specific background positions if needed per image
-// You can extend this map based on your company details if the backend
-// can provide a specific position key/value.
 const backgroundPositionMap = {
   DLF_bg: 'bottom left',
   PS_bg: 'center center',
-  bg: '30% center', // Changed: '45% center' moves it slightly left of center
+  bg: '30% center',
   Ambuja_bg: 'top center',
 };
 
@@ -40,6 +37,7 @@ const CompanyLandingPage = () => {
   const [companyDetails, setCompanyDetails] = useState(null);
   const [loadingCompanyDetails, setLoadingCompanyDetails] = useState(true);
   const [companyDetailsError, setCompanyDetailsError] = useState('');
+  const [loadingWorkflows, setLoadingWorkflows] = useState(false);
 
   const backendBaseUrl = getBackendUrl();
     
@@ -72,13 +70,39 @@ const CompanyLandingPage = () => {
       setCompanyDetailsError('No subdomain detected. Please access via a tenant subdomain (e.g., dlf.localhost:8080).');
     }
   }, [currentSubdomain, backendBaseUrl]);
+
+  // Effect to handle post-authentication loading and redirection
+  useEffect(() => {
+    if (authStatus === 'authenticated' && !errorMsg) {
+      // Set loadingWorkflows to true to show the loader
+      setLoadingWorkflows(true);
+      // In a real application, you would now initiate the fetch for user workflows
+      // For demonstration, we'll use a setTimeout to simulate an async operation
+      const timer = setTimeout(() => {
+        // Here you would typically perform your navigation logic
+        // For example: navigate('/dashboard');
+        console.log("Simulating workflow loading and redirection to dashboard...");
+        // After workflows are loaded and navigation happens, you would set loadingWorkflows(false)
+        // This is where you'd redirect to the dashboard page
+        // For example, if you use react-router-dom:
+        // history.push('/dashboard'); 
+      }, 2000); // Simulate 2 seconds of loading
+
+      // Cleanup the timer if the component unmounts or authStatus changes
+      return () => clearTimeout(timer);
+    } else if (authStatus !== 'authenticating' && authStatus !== 'authenticated') {
+      // If authStatus changes to something other than authenticating/authenticated,
+      // ensure loadingWorkflows is false. This covers errors or logging out.
+      setLoadingWorkflows(false);
+    }
+  }, [authStatus, errorMsg]);
   
 
   // Render loading state for company details
   if (loadingCompanyDetails) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p className="text-lg text-gray-700">Loading company details...</p>
+      <BarLoader color="#0047AB"/>      
       </div>
     );
   }
@@ -100,6 +124,14 @@ const CompanyLandingPage = () => {
       </div>
     );
   }
+
+  if (loadingWorkflows) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <BarLoader color="#0047AB"/>
+        </div>
+      );
+   }
 
   // Destructure details for easier use
   const { name, logo_url, background_img_url, description } = companyDetails;

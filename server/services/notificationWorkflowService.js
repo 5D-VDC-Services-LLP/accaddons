@@ -138,37 +138,31 @@ const getNotificationWorkflowsByProject = async (mongoUri, projectId, module = n
  * @returns {Promise<object>} The updated notification workflow document.
  */
 const updateNotificationWorkflow = async (mongoUri, workflowId, updates = {}) => {
-    try {
-        const connection = await getMongoDBConnection(mongoUri);
-        const NotificationWorkflow = getNotificationWorkflowModel(connection);
+  console.log("Service: updateNotificationWorkflow received updates:", updates);
+  try {
+    const connection = await getMongoDBConnection(mongoUri);
+    const Workflow = getNotificationWorkflowModel(connection);
 
-        const allowedFields = ['status', 'channels', 'due_in'];
-        const updateFields = Object.keys(updates);
+    // Mongoose will automatically handle validation based on schema
+    // and will ignore fields not defined in the schema.
+    // The controller is responsible for filtering allowed fields from req.body.
+    const updated = await Workflow.findOneAndUpdate(
+      { workflow_id: workflowId }, // Find by workflow_id (UUID)
+      { $set: { ...updates, updated_at: Date.now() } }, // Apply updates and set updated_at
+      { new: true, runValidators: true } // Return the updated document and run schema validators
+    );
 
-        for (const field of updateFields) {
-            if (!allowedFields.includes(field)) {
-                throw new CustomError(`Update not allowed for field: ${field}`, 400);
-            }
-        }
-
-        const updated = await NotificationWorkflow.findOneAndUpdate(
-            { workflow_id: workflowId },
-            { ...updates, updated_at: Date.now() },
-            { new: true }
-        );
-
-        if (!updated) {
-            throw new CustomError('Notification workflow not found.', 404);
-        }
-
-        return updated;
-    } catch (error) {
-        console.error(`Failed to update notification workflow '${workflowId}':`, error);
-        if (error instanceof CustomError) {
-            throw error;
-        }
-        throw new CustomError('Notification workflow update failed.', 500);
+    if (!updated) {
+      throw new CustomError('Workflow not found for update.', 404);
     }
+    return updated;
+  } catch (error) {
+    console.error(`Service: Failed to update workflow '${workflowId}':`, error);
+    if (error.name === 'ValidationError') {
+      throw new CustomError(`Validation Error: ${error.message}`, 400, error.errors);
+    }
+    throw new CustomError('Workflow update failed.', 500);
+  }
 };
 
 /**
@@ -203,24 +197,21 @@ const deleteNotificationWorkflow = async (mongoUri, workflowId) => {
  * @param {string} workflowId - The ID of the notification workflow.
  * @returns {Promise<object>} The notification workflow document.
  */
-const getNotificationWorkflowById = async (mongoUri, workflowId) => {
+const getNotificationWorkflowsById = async (mongoUri, workflowId) => {
     try {
-        const connection = await getMongoDBConnection(mongoUri);
-        const NotificationWorkflow = getNotificationWorkflowModel(connection);
+    const connection = await getMongoDBConnection(mongoUri);
+    const Workflow = getNotificationWorkflowModel(connection);
 
-        const workflow = await NotificationWorkflow.findOne({ workflow_id: workflowId });
-        if (!workflow) {
-            throw new CustomError('Notification workflow not found.', 404);
-        }
-
-        return workflow;
-    } catch (error) {
-        console.error(`Failed to fetch notification workflow '${workflowId}':`, error);
-        if (error instanceof CustomError) {
-            throw error;
-        }
-        throw new CustomError('Failed to retrieve notification workflow details.', 500);
+    const workflow = await Workflow.findOne({ workflow_id: workflowId });
+    if (!workflow) {
+      throw new CustomError('Workflow not found.', 404);
     }
+    console.log(`Fetched workflow: ${workflow.workflow_name} (${workflow.workflow_id})`);
+    return workflow;
+  } catch (error) {
+    console.error(`Failed to fetch workflow '${workflowId}':`, error);
+    throw new CustomError('Failed to retrieve workflow details.', 500);
+  }
 };
 
 /**
@@ -247,6 +238,6 @@ module.exports = {
     getNotificationWorkflowsByProject,
     updateNotificationWorkflow,
     deleteNotificationWorkflow,
-    getNotificationWorkflowById,
+    getNotificationWorkflowsById,
     getAllNotificationWorkflows,
 };
