@@ -726,7 +726,7 @@ const VerifyPhone = () => {
         // Perform a full browser redirect using window.location.href
         // This causes a full page reload, allowing useAutodeskAuth to correctly
         // detect the 'authStatus=success' from the URL query parameters.
-        window.location.href = data.redirectTo;
+        window.location.replace(data.redirectTo);
       } else {
         // Fallback error if backend didn't provide expected redirect info
         throw new Error(data.message || 'OTP verification success, but no redirect information received.');

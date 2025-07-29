@@ -62,8 +62,7 @@ const WorkflowTable = ({
     return (
       <div className="text-center py-8 text-red-600 bg-red-50 border border-red-200 rounded-lg p-4">
         <p className="text-lg font-medium mb-2">Error loading workflows:</p>
-        <p className="text-sm">{error}</p>
-        <p className="text-sm mt-2">Please try refreshing the page.</p>
+          <p className="text-sm mt-2">Please try refreshing the page.</p>
       </div>
     );
   }

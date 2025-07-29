@@ -4,6 +4,7 @@ require('dotenv').config();
 const config = {
   port: process.env.PORT || 8080,
   frontendPort: 8080,
+  environment: process.env.NODE_ENV || 'production',
   postgres: {
     user: process.env.PG_USER,
     host: process.env.PG_HOST,

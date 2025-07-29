@@ -46,16 +46,36 @@ export default function CompanyGrid() {
   setTimeout(() => {
     // Construct subdomain URL
     const subdomain = company.subdomain; // e.g., 'dlf'
-    const baseDomain = window.location.hostname
-      .replace(/^([^.]+\.)?/, ''); // removes any existing subdomain
+    const baseDomain = import.meta.env.VITE_DOMAIN || '5daddons.com';
+
     const protocol = window.location.protocol;
-    const port = window.location.port ? `:${window.location.port}` : '';
-    // For localhost, you may need to use a hosts file or a dev proxy for subdomains
-    const url = `${protocol}//${subdomain}.${baseDomain}${port}/`;
-    window.location.href = url;
-    setLoadingIndex(null);
-  }, 500);
-};
+     let port = '';
+      if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.')) {
+          // If on localhost/local IP, use the current port from the browser
+          // or a specific dev port if your backend is on a different one for frontend access
+          if (window.location.port) {
+              port = `:${window.location.port}`;
+          }
+          // Special handling for localhost with explicit subdomain-like behavior
+          // e.g., 5dvdc.localhost:3000 -> 5dvdc.localhost:3000
+          // If you want to simulate subdomains on localhost, you'd configure your hosts file.
+          // In that case, window.location.hostname would already be '5dvdc.localhost'
+          // and baseDomain should be 'localhost'.
+          if (baseDomain === 'localhost') {
+              window.location.href = `${protocol}//${subdomain}.${baseDomain}${port}/`;
+              setLoadingIndex(null);
+              return;
+          }
+      } 
+      // For production or any other non-localhost scenario, the port should be omitted for standard ports.
+      // Caddy handles the internal 8080.
+      
+      const url = `${protocol}//${subdomain}.${baseDomain}${port}/`;
+      
+      window.location.href = url;
+      setLoadingIndex(null);
+    }, 500);
+  };
 
   return (
     

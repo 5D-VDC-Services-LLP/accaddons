@@ -13,7 +13,7 @@ const createWorkflow = async (req, res, next) => {
       module,
       channels,
       escalate_to,
-      schedule,
+      frequency,
       filters
     } = req.body;
 
@@ -28,8 +28,6 @@ const createWorkflow = async (req, res, next) => {
       throw new CustomError('Missing required workflow fields.', 400);
     }
 
-    const frequencyFromPayload = schedule && Array.isArray(schedule.frequency) ? schedule.frequency : [];
-
     const newWorkflow = await workflowService.createWorkflow(mongoUri, {
       workflow_name,
       project_id,
@@ -37,7 +35,7 @@ const createWorkflow = async (req, res, next) => {
       channels,
       escalate_to,
       filters,
-      frequency: frequencyFromPayload,
+      frequency,
       created_by
     });
     

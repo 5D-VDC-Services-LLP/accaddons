@@ -146,9 +146,28 @@ const autodeskCallback = async (req, res, next) => {
         tenant: req.companyConfig.subdomain,
         redirectTo: originalFrontendRedirectUrl, // Store the original redirect URL here
       };
+        const parsedUrl = new URL(originalFrontendRedirectUrl);
+        const verifyPhoneUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}${parsedUrl.port ? ':' + parsedUrl.port : ''}/verify-phone`;
+        console.log(`Redirecting to verifyPhone: ${verifyPhoneUrl}`); // ADD THIS LOG
+
         console.log(`Redirecting to pendingPhone: ${originalFrontendRedirectUrl}?authStatus=pendingPhone`); // ADD THIS LOG
-        return res.redirect(`${originalFrontendRedirectUrl}?authStatus=pendingPhone`);
+        return res.redirect(verifyPhoneUrl);
     }
+
+    // NEW: 5. Validate Autodesk Hubs and Projects access
+    let initialProjectsList = [];
+    try {
+      initialProjectsList = await getAndValidateAutodeskProjectAccess(autodeskId, req.companyConfig);
+      console.log(`Autodesk Project Access validated for user ${autodeskId}. Found ${initialProjectsList.length} projects.`);
+    } catch (projectAccessError) {
+      // If validation fails, redirect with an error message
+      console.error('Autodesk Project Access Validation Failed:', projectAccessError.message);
+      return res.redirect(`${originalFrontendRedirectUrl}?authStatus=error&message=${encodeURIComponent(projectAccessError.message)}`);
+    }
+
+    // NEW: 8. Store the projects list in the session for the frontend to retrieve once.
+    req.session.initialAutodeskProjects = initialProjectsList;
+    console.log('Initial projects list stored in session.');
 
     // 6. Generate your internal JWT
     const internalJwtToken = jwt.generateToken({
@@ -176,20 +195,7 @@ const autodeskCallback = async (req, res, next) => {
     // if it's coming from the frontend correctly.
     res.redirect(`${originalFrontendRedirectUrl}?authStatus=success`);
 
-    // NEW: 5. Validate Autodesk Hubs and Projects access
-    let initialProjectsList = [];
-    try {
-      initialProjectsList = await getAndValidateAutodeskProjectAccess(autodeskId, req.companyConfig);
-      console.log(`Autodesk Project Access validated for user ${autodeskId}. Found ${initialProjectsList.length} projects.`);
-    } catch (projectAccessError) {
-      // If validation fails, redirect with an error message
-      console.error('Autodesk Project Access Validation Failed:', projectAccessError.message);
-      return res.redirect(`${originalFrontendRedirectUrl}?authStatus=error&message=${encodeURIComponent(projectAccessError.message)}`);
-    }
-
-    // NEW: 8. Store the projects list in the session for the frontend to retrieve once.
-    req.session.initialAutodeskProjects = initialProjectsList;
-    console.log('Initial projects list stored in session.');
+    
 
   } catch (error) {
     console.error('Autodesk OAuth Callback Error:', error);
@@ -273,70 +279,96 @@ const submitPhoneAndSendOTP = async (req, res, next) => {
 
 
 const verifyOtpAndFinalizeLogin = async (req, res, next) => {
-  try {
-    const { otp } = req.body;
-    const { pendingAutodeskLogin } = req.session;
+    try {
+        const { otp } = req.body;
+        const { pendingAutodeskLogin } = req.session;
 
-    if (!pendingAutodeskLogin || !pendingAutodeskLogin.autodeskId) {
-      throw new CustomError('Session expired. Please login again.', 400);
+        if (!pendingAutodeskLogin || !pendingAutodeskLogin.autodeskId || !pendingAutodeskLogin.tenant || !pendingAutodeskLogin.redirectTo) {
+            // Added check for tenant and redirectTo as they are critical now
+            throw new CustomError('Session expired or invalid pending login data. Please login again.', 400);
+        }
+
+        // 1. Verify OTP
+        const result = await otpService.verifyOtp(pendingAutodeskLogin.autodeskId, otp);
+        if (!result.verified) {
+            throw new CustomError(result.message || 'OTP verification failed.', 401);
+        }
+
+        // 2. Retrieve user and company config
+        const user = await userService.getUserByAutodeskId(pendingAutodeskLogin.autodeskId);
+        if (!user) {
+            throw new CustomError('User not found after OTP verification.', 404);
+        }
+
+        // We need the company config to fetch projects
+        // Assuming you have a way to get company config by subdomain or user ID
+        // For simplicity, let's assume req.companyConfig is available here if the tenant middleware ran,
+        // or fetch it using pendingAutodeskLogin.tenant
+        const companyConfig = req.companyConfig || await companyService.getCompanyConfigBySubdomain(pendingAutodeskLogin.tenant);
+        if (!companyConfig) {
+            throw new CustomError('Company configuration not found for this tenant.', 404);
+        }
+
+        // 3. Generate your internal JWT
+        const token = jwt.generateToken({
+            autodeskId: user.autodesk_id,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            emailId: user.email_id,
+            // Add other claims as needed
+        });
+
+        // 4. Send the internal JWT back to the frontend via HTTP-only cookie.
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            // secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 14 * 24 * 60 * 60 * 1000,
+            // ...(process.env.NODE_ENV === 'production' && { domain: `.${config.mainDomain}` })
+        });
+
+        // 5. **NEW:** Validate Autodesk Hubs and Projects access and store in session
+        let initialProjectsList = [];
+        try {
+            // This is crucial: run the project access validation here
+            initialProjectsList = await getAndValidateAutodeskProjectAccess(user.autodesk_id, companyConfig);
+            console.log(`Autodesk Project Access validated after OTP for user ${user.autodesk_id}. Found ${initialProjectsList.length} projects.`);
+        } catch (projectAccessError) {
+            console.error('Autodesk Project Access Validation Failed after OTP:', projectAccessError.message);
+            // Decide how to handle this error:
+            // Option A: Send an error status back to the frontend.
+            // Option B: Redirect to an error page (less ideal if frontend expects JSON).
+            // For now, we'll return a success but with an empty project list, and the frontend will handle.
+            // Or you could throw this error for the 'next(error)' handler. Let's make it a full error for now.
+            throw new CustomError(`Failed to load projects after OTP verification: ${projectAccessError.message}`, 500);
+        }
+
+        // 6. Store the projects list in the session for the frontend to retrieve once.
+        req.session.initialAutodeskProjects = initialProjectsList;
+        console.log('Initial projects list stored in session after OTP verification.');
+
+        // 7. Get the redirect URL stored in the session
+        const redirectTo = pendingAutodeskLogin.redirectTo;
+
+        // 8. Clear the pending login session data
+        delete req.session.pendingAutodeskLogin;
+
+        // 9. Send success response to frontend, including the target redirect URL
+        res.json({
+            success: true,
+            message: 'OTP verified successfully. Redirecting...',
+            redirectTo: `${redirectTo}?authStatus=success` // Frontend will use this to navigate
+        });
+
+    } catch (error) {
+        console.error('OTP Verification and Finalization Failed:', error);
+        // Ensure to clear the pendingAutodeskLogin session if an error occurs during finalization
+        // This prevents users from being stuck in a bad state if the JWT or project fetch fails after OTP.
+        if (req.session.pendingAutodeskLogin) {
+            delete req.session.pendingAutodeskLogin;
+        }
+        next(error);
     }
-
-    // Verify OTP from DB
-    const result = await otpService.verifyOtp(pendingAutodeskLogin.autodeskId, otp);
-    if (!result.verified) {
-      // This case should ideally be caught by otpService throwing an error,
-      // but as a safeguard, we re-throw if it somehow returns { verified: false }
-      throw new CustomError(result.message || 'OTP verification failed.', 401);
-    }
-
-    const user = await userService.getUserByAutodeskId(pendingAutodeskLogin.autodeskId);
-
-    // Issue JWT
-    const token = jwt.generateToken({
-      autodeskId: user.autodesk_id,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      emailId: user.email_id,
-    });
-
-    res.cookie('jwt', token, {
-      httpOnly: true,
-      // secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      maxAge: 14 * 24 * 60 * 60 * 1000,
-      // ...(process.env.NODE_ENV === 'production' && { domain: `.${config.mainDomain}` })
-    });
-
-    // Get the redirect URL stored in the session
-    const redirectTo = pendingAutodeskLogin.redirectTo;
-
-    // Clear the pending login session data
-    delete req.session.pendingAutodeskLogin;
-
-    // // Redirect the user to the intended frontend URL with authStatus=success
-    // if (redirectTo) {
-    //   res.redirect(`${redirectTo}?authStatus=success`);
-    // } else {
-    //   // Fallback if redirectTo somehow isn't available (shouldn't happen with the fix)
-    //   console.warn('redirectTo not found in session after OTP verification. Redirecting to default /workflows.');
-    //   const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    //   const defaultRedirectUrl = `${protocol}://${pendingAutodeskLogin.tenant}.${config.mainDomain}/workflows`;
-    //   res.redirect(`${defaultRedirectUrl}?authStatus=success`);
-    // }
-    res.json({
-      success: true,
-      message: 'OTP verified successfully. Redirecting...',
-      redirectTo: `${redirectTo}?authStatus=success` // Send the target URL back to frontend
-    });
-
-
-  } catch (error) {
-    console.error('OTP Verification and Finalization Failed:', error);
-    // When an error occurs (e.g., incorrect OTP), the `next(error)` middleware
-    // will handle sending an appropriate HTTP error response (e.g., 401) to the frontend.
-    // The frontend's /verify-phone page should then display this error message.
-    next(error);
-  }
 };
 
 /**
@@ -345,7 +377,7 @@ const verifyOtpAndFinalizeLogin = async (req, res, next) => {
 const logout = (req, res, next) => {
   try {
     // Clear the JWT cookie
-    res.clearCookie('jwt', {
+    res.clearCookie('jwt', '', {
       httpOnly: true,
       // secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
@@ -354,8 +386,18 @@ const logout = (req, res, next) => {
       ...(process.env.NODE_ENV === 'production' && { domain: `.${config.mainDomain}` })
     });
 
-    // Determine the redirect URL from the query parameter, or default to root
-    const logoutRedirectUrl = req.query.redirectTo || '/';
+    // Determine the redirect URL from the query parameter, or default to the root of the current tenant's subdomain.
+    // Ensure this matches the expected login page URL of your frontend.
+    const logoutRedirectUrl = req.query.redirectTo || `/${req.companyConfig.subdomain}`;
+
+    const sendLogoutResponse = (url) => {
+      // Before sending, always check if headers have already been sent to prevent ERR_HTTP_HEADERS_SENT
+      if (res.headersSent) {
+        console.warn('Attempted to send logout response but headers already sent.');
+        return; // Exit to prevent further issues
+      }
+      res.json({ success: true, message: 'Logged out successfully.', redirectTo: url });
+    };
 
     // Destroy the session (if it exists)
     if (req.session) {
@@ -364,15 +406,17 @@ const logout = (req, res, next) => {
           console.error('Error destroying session during logout:', err);
           // Log the error, but proceed with redirect as cookie is already cleared.
           // This ensures the user is logged out even if session storage has issues.
+        // If session destruction itself fails, pass the error to the error handler
+          return next(new CustomError('Logout failed: Session destruction error.', 500));
         }
-        console.log('Session destroyed.');
-        // Perform the redirect AFTER session destruction is attempted
-        res.redirect(logoutRedirectUrl);
-      });
+        console.log('Session destroyed.'); // This log is fine
+        sendLogoutResponse(logoutRedirectUrl); 
+       });
     } else {
       // If no session exists, just clear cookie (already done) and redirect immediately
       console.log('No active session to destroy.');
       res.redirect(logoutRedirectUrl);
+      sendLogoutResponse(logoutRedirectUrl);
     }
 
   } catch (error) {

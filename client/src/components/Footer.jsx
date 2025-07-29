@@ -33,7 +33,7 @@ const Footer = () => {
             </div>
             <div>
               <a 
-                href="https://www.linkedin.com/company/5d-vdc-services" // Assuming a LinkedIn page for a more relevant link
+                href="https://www.linkedin.com/company/5dvdc/" // Assuming a LinkedIn page for a more relevant link
                 className="hover:text-gray-300 transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"

@@ -5,6 +5,8 @@ const { pool: pgPool } = require('./db/postgres'); // Ensure PostgreSQL pool is 
 const { closeAllMongoDBConnections } = require('./db/mongodb'); // For graceful shutdown
 
 const PORT = config.port;
+console.log('JWT_SECRET is:', process.env.JWT_SECRET);
+
 
 const startServer = async () => {
   try {
