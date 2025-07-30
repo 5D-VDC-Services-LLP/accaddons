@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Search, X } from "lucide-react";
 
-const WorkflowFilters = ({
+const WorkflowEscalateTo = ({
   isUserActive,
   setIsUserActive,
   searchUser,
@@ -145,7 +145,7 @@ const WorkflowFilters = ({
           <div className="flex flex-nowrap gap-1 w-max flex-shrink-0">
             {selectedItems.map((item) => (
               <span
-                key={type === "role" ? item : item.id || item.autodeskId} // <--- Adjusted key for consistency
+                key={type === "role" ? item : item.autodeskId || item.id} // <--- Adjusted key for consistency
                 className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1 flex-shrink-0"
               >
                 {getSelectedName(
@@ -306,4 +306,4 @@ const WorkflowFilters = ({
   );
 };
 
-export default WorkflowFilters;
+export default WorkflowEscalateTo;

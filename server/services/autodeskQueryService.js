@@ -1,12 +1,12 @@
 const axios = require('axios');
 const { mapWorkflowFiltersToIssueAPI } = require('../utils/issueFilterMapper');
 
-async function getItemCount(workflow, accessToken) {
+async function getItemIds(workflow, accessToken) {
   const { module, filters = [], project_id } = workflow;
 
   if (module !== 'issues') {
     console.warn(`[Count] Skipping non-issue module: ${module}`);
-    return 0;
+    return [];
   }
 
   const url = `https://developer.api.autodesk.com/construction/issues/v1/projects/${project_id}/issues`;
@@ -21,7 +21,8 @@ async function getItemCount(workflow, accessToken) {
       params
     });
 
-    return response.data.results?.length || 0;
+    const results = response.data.results || [];
+    return results.map(issue => issue.id);  // Return just the IDs
   } catch (err) {
     console.error(`[AUTODESK] Failed to query issues for workflow ${workflow.display_id}`);
     console.error(err?.response?.data || err.message);
@@ -29,4 +30,4 @@ async function getItemCount(workflow, accessToken) {
   }
 }
 
-module.exports = { getItemCount };
+module.exports = { getItemIds };

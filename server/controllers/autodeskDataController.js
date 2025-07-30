@@ -2,6 +2,7 @@
 const autodeskService = require('../services/autodeskService');
 const autodeskTokenService = require('../services/autodeskTokenService');
 const CustomError = require('../utils/customError');
+const { sanitizeProjectUsers } = require('../utils/sanitizeUsers');
 const axios = require('axios');
 /**
  * Utility function to get a valid (and potentially refreshed) Autodesk APS access token.
@@ -333,7 +334,7 @@ const fetchIssueTypesAndRootCauses = async (req, res, next) => {
           { "id": "overdue_7", "name": "Overdue (3 - 7 days)" },
           { "id": "overdue_critical", "name": "Critical (> 7 days)" },
         ],
-        "Assigned To User": projectUsers,
+        "Assigned To User": sanitizeProjectUsers(projectUsers),
         "Assigned To Role": projectRoles,
         "Assigned To Companies": projectCompanies,
         "Issue Types": issueTypes,
@@ -416,7 +417,7 @@ const fetchReviewWorkflows = async (req, res, next) => {
                     { "id": "overdue_7", "name": "Overdue (3 - 7 days)" },
                     { "id": "overdue_critical", "name": "Critical (> 7 days)" },
                   ],
-        "Assigned To User": projectUsers,
+        "Assigned To User": sanitizeProjectUsers(projectUsers),
         "Assigned To Role": projectRoles,
         "Assigned To Companies": projectCompanies,
         "Review Workflows": reviewWorkflows,
@@ -493,7 +494,7 @@ const fetchFormTemplates = async (req, res, next) => {
                     { "id": "in_progress", "name": "Open" },
                     { "id": "in_review", "name": "In Review" },
                   ],
-        "Assigned To User": projectUsers,
+        "Assigned To User": sanitizeProjectUsers(projectUsers),
         "Assigned To Role": projectRoles,
         "Assigned To Company": projectCompanies,
         "Form Templates": formTemplates,

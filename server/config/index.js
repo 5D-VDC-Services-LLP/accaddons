@@ -29,6 +29,12 @@ const config = {
     templateName: process.env.WHATSAPP_TEMPLATE_NAME || 'acc_notifications_authentication',
     languageCode: process.env.WHATSAPP_LANG || 'en', // fallback
   },
+  email: {
+    clientId: process.env.MS_GRAPH_CLIENT_ID,
+    clientSecret: process.env.MS_GRAPH_CLIENT_SECRET,
+    tenantId: process.env.MS_GRAPH_TENANT_ID,
+    senderEmail: process.env.MS_GRAPH_SENDER_EMAIL
+  },
 };
 
 // Basic validation to ensure critical variables are set

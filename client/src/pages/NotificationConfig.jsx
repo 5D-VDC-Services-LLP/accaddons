@@ -947,8 +947,9 @@ const NotificationConfig = () => {
 
   if (loading) { // HIGHLIGHT: Simplified loading check
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <BarLoader color="#0047AB"/>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <BarLoader color="#000000"/>
+        <p className='pt-2'>Loading data</p>
       </div>
     );
   }

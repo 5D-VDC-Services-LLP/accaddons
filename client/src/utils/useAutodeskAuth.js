@@ -21,7 +21,6 @@ export const useAutodeskAuth = () => {
 
     const backendBaseUrl = useMemo(() => getBackendUrl(), []);
 
-    // --- Guarded login trigger ref ---
     const loginCalledRef = useRef(false);
     const oauthHandledRef = useRef(false);
     // Ref to ensure initial project fetch via OAuth callback is idempotent
@@ -44,8 +43,8 @@ export const useAutodeskAuth = () => {
     const navigateToWorkflowsWithProject = useCallback((projects) => {
         if (Array.isArray(projects) && projects.length > 0) {
             const projectId = projects[0].id; // Assuming you always want the first project
-            console.log(`Navigating to /workflows/${projectId}?tab=Escalation`);
-            navigate(`/workflows/${projectId}?tab=escalation`, { replace: true });
+            console.log(`Navigating to /workflows/${projectId}?tab=Escalations`);
+            navigate(`/workflows/${projectId}?tab=Escalations`, { replace: true });
         } else {
             console.warn("No projects found. Redirecting to home or an appropriate 'no projects' page.");
             // If no projects are found, redirect to root or a dedicated 'no projects' page.
@@ -146,13 +145,9 @@ export const useAutodeskAuth = () => {
                 });
 
                 if (!response.ok) throw new Error('Re-authentication failed');
-                // If re-authentication successful, fetch projects.
-                // fetchInitialProjects will handle setting authStatus to 'authenticated',
-                // marking initialProjectsFetchedRef, and navigating with the project ID.
                 await fetchInitialProjects();
             } catch (err) {
                 console.warn('❌ Silent re-authentication failed:', err.message);
-                // Fallback to full OAuth if silent re-auth fails or if silent re-auth *fails*
                 setAuthStatus('authenticating'); // Reset status to trigger full login
                 window.location.href = `${backendBaseUrl}/api/auth/autodesk/login?redirectTo=${encodeURIComponent(redirectTo)}`;
             }

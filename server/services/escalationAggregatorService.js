@@ -4,7 +4,7 @@ const db = require('../db/postgres');
 const { getMongoDBConnection } = require('../db/mongodb');
 const workflowService = require('./workflowService');
 const tenantService = require('./tenantService');
-const { getItemCount } = require('./autodeskQueryService');
+const { getItemIds } = require('./autodeskQueryService');
 const { saveEscalationAggregate } = require('../models/escalationAggregateModel');
 const cron = require('node-cron');
 
@@ -19,14 +19,15 @@ async function runEscalationAggregation(accessToken) {
 
   for (const tenant of tenantConfigs) {
     const { mongodb_uri, name: tenantName } = tenant;
+
     try {
       const workflows = await workflowService.getAllWorkflows(mongodb_uri);
 
       for (const wf of workflows) {
         if (!wf.frequency?.includes(today) || wf.status !== 'active') continue;
 
-        const count = await getItemCount(wf, accessToken);
-        if (count === 0) continue;
+        const itemIds = await getItemIds(wf, accessToken);
+        if (itemIds.length === 0) continue;
 
         const escalateUsers = wf.escalate_to?.users || [];
 
@@ -38,20 +39,24 @@ async function runEscalationAggregation(accessToken) {
               email: user.email,
               autodeskId: user.autodeskId,
               phone: null,
-              moduleCounts: { issues: 0, forms: 0, reviews: 0 },
-              projects: new Set(),
-              projectNames: new Set(),
+              aggregate: {},  // NEW STRUCTURE
               channels: new Set(wf.channels),
               tenant: tenantName,
-              mongoUri: mongodb_uri,
               date: new Date().toISOString().slice(0, 10)
             });
           }
 
           const entry = aggregationBuffer.get(key);
-          entry.moduleCounts[wf.module] += count;
-          entry.projects.add(wf.project_id);
-          if (wf.project_name) entry.projectNames.add(wf.project_name);
+
+          if (!entry.aggregate[wf.project_id]) {
+            entry.aggregate[wf.project_id] = {
+              issues: [],
+              forms: [],
+              reviews: []
+            };
+          }
+
+          entry.aggregate[wf.project_id][wf.module].push(...itemIds);  // You'll need to return IDs from getItemCount
         }
       }
     } catch (err) {
@@ -73,19 +78,16 @@ async function runEscalationAggregation(accessToken) {
       console.warn(`❌ DB Error for ${email}:`, err.message);
     }
 
-    const templateType = user.projects.size === 1 ? 'single' : 'multi';
+    const templateType ='single';
 
     await saveEscalationAggregate({
       email: user.email,
       autodeskId: user.autodeskId,
       phone: user.phone,
-      moduleCounts: user.moduleCounts,
-      projects: [...user.projects],
-      projectNames: [...user.projectNames],
+      aggregate: user.aggregate,
       channels: [...user.channels],
       templateType,
       tenant: user.tenant,
-      mongoUri: user.mongoUri,
       date: user.date,
       sent: false,
       failed: false,
@@ -98,7 +100,7 @@ async function runEscalationAggregation(accessToken) {
 
 const scheduleAggregationCron = (accessToken) => {
   const isDev = process.env.NODE_ENV !== 'production';
-  const schedule = isDev ? '0 6 * * *' : '0 6 * * *'; // Every minute for dev, 6 AM for prod
+  const schedule = isDev ? '*/1 * * * *' : '0 6 * * *'; // Every minute for dev, 6 AM for prod
 
   cron.schedule(schedule, async () => {
     console.log(`\n🛠️ Running Aggregation CRON: [${process.env.NODE_ENV}]`);

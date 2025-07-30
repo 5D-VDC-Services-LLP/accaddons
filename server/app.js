@@ -51,6 +51,8 @@ app.use(tenantResolver);
 // Routes
 app.use('/api/auth', authRoutes);
 
+app.use('/api/email', require('./routes/emailRoutes')); // NEW: Import email routes TENTATIVE
+
 app.get('/api/debug/jwt', (req, res) => {
   const token = req.cookies.jwt;
   res.json({ jwt: token });
@@ -80,7 +82,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-const AUTODESK_ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlhrUFpfSmhoXzlTYzNZS01oRERBZFBWeFowOF9SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiLCJhY2NvdW50OnJlYWQiXSwiY2xpZW50X2lkIjoiREFJRTV1OVJvU3B1bjFSZ0dHblA1TGVGeVBucXhzVVoiLCJpc3MiOiJodHRwczovL2RldmVsb3Blci5hcGkuYXV0b2Rlc2suY29tIiwiYXVkIjoiaHR0cHM6Ly9hdXRvZGVzay5jb20iLCJqdGkiOiJrQzE5V3J3cWlNWHlSaU9PSU5HRGRYVmF0SUp1YTlyVUNOWk5TblFucGtkWHlHUWxzNXNBR040bGdzS09Hc0dvIiwiZXhwIjoxNzUyMDcxMjMwLCJ1c2VyaWQiOiI3TE4yUUo1WlFFV0NCNzJDIn0.OV1IDGI1UhxvkgmgCpsfrfhlxtco9KbkrfmsEGQm8g3elf4ngMPlqoQSb1IBtTOH_V3mMV9-N5y9GGhDqbrDCsXETeuslJz4MzGv08F4PtKnh_2QynyX9pcfezI9absyKCd44iLjiRuGRzlzqdRkKhoQjpIonAg_2i45p4sOszjDSxWGZrSl9xLDNQigiodSPLzukY7CFKzhgLJ7xaJwBBhA09la-kAEh4rSwiiHYxEFvGxR37UiHLHYfHf4rHiVw8YsjvOJlCZwOW93qk_fKeLz8lRJfZmELVv99-tJcQfm-TL9wOy-HYgK1PPGdCWp7ALSAeNob0wBVzAbPmycgA"
+const AUTODESK_ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlZiakZvUzhQU3lYODQyMV95dndvRUdRdFJEa19SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiLCJhY2NvdW50OnJlYWQiXSwiY2xpZW50X2lkIjoiREFJRTV1OVJvU3B1bjFSZ0dHblA1TGVGeVBucXhzVVoiLCJpc3MiOiJodHRwczovL2RldmVsb3Blci5hcGkuYXV0b2Rlc2suY29tIiwiYXVkIjoiaHR0cHM6Ly9hdXRvZGVzay5jb20iLCJqdGkiOiJsRFZHNnAyaUs5a0ZQTGRaR2RUYml1Q0JuZXpjS0lkeklCUFZSdEFLT1pEcTJUVVhXbDlhU0M5dG82eXNMV2I2IiwidXNlcmlkIjoiN0xOMlFKNVpRRVdDQjcyQyIsImV4cCI6MTc1Mzg2Mjg4OX0.hyOslIaSduHORq6dBTEa2uhoNWDQy33-XN_Z-YkEZVwYoyEKHE3QWV70xlIiuwIEQu5_CcHtJNTU_9z8CjLxUYv8IHGEWfusE_0350lqdRUZMNlRXsAOhJ5-zKrXz0CVbxRkWvzy-mamh1rEWKj-OIkJMyLdM6caeWBNf2_fC1xO-79bKC1hY-ODXB4Q3qNzmgHXehFkBiasl2nyi6NhcE-hAKeo-ASOBO-Tk4T0krNMgmJ-hDu6H3YHI5DmXp0GIdnujpxgBJrgTluU_zDtafliPslOQA9NS0Xn3vJ4oGh8yb5uhUG8Byur6qdpmp5B-K3UL0BuGPazYz1Nt3qDnA"
 
 // Start CRON Scheduler (only if not in test environment)
 if (process.env.NODE_ENV !== 'test') {

@@ -6,18 +6,20 @@ const escalationAggregateSchema = new mongoose.Schema({
   email: String,
   autodeskId: String,
   phone: String,
-  moduleCounts: {
-    issues: Number,
-    forms: Number,
-    reviews: Number
+  aggregate: {
+    type: Map,
+    of: new mongoose.Schema({
+      issues: [String],
+      forms: [String],
+      reviews: [String]
+    }, { _id: false })
   },
-  projects: [String],
-  projectNames: [String],
   channels: [String],
   templateType: { type: String, enum: ['single', 'multi'], required: true },
   tenant: String,
-  mongoUri: String,
   date: String,
+  pdf_created: { type: Boolean, default: false },
+  pdf_url: String,
   sent: { type: Boolean, default: false },
   failed: { type: Boolean, default: false },
   created_at: { type: Date, default: Date.now }

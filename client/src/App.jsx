@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes, useNavigate, useLocation } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import './index.css'
 import CompanyGrid from './pages/CompanyGrid'
@@ -12,13 +12,22 @@ import ProtectedRoute from './components/ProtectedRoute'
 import WorkflowConfig from './pages/WorkflowConfig'
 import NotificationConfig from './pages/NotificationConfig'
 import EditWorkflowDispatcher from './pages/EditWorkflowDispatcher';
+import NotFound from './pages/NotFound'
 
 
 
 const AppContent = () => {
   const { authStatus, currentSubdomain } = useAutodeskAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   console.log("Hello from", currentSubdomain);
   const RootComponent = currentSubdomain ? CompanyLandingPage : HomePage;
+
+  React.useEffect(() => {
+    if (currentSubdomain && location.pathname === '/company-grid') {
+      navigate('/', { replace: true });
+    }
+  }, [currentSubdomain, location.pathname, navigate]);
 
   return (
     <div>
@@ -70,6 +79,8 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
     </div>

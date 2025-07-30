@@ -102,7 +102,7 @@ const CompanyLandingPage = () => {
   if (loadingCompanyDetails) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <BarLoader color="#0047AB"/>      
+      <BarLoader color="#000000"/>      
       </div>
     );
   }
@@ -128,7 +128,7 @@ const CompanyLandingPage = () => {
   if (loadingWorkflows) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <BarLoader color="#0047AB"/>
+        <BarLoader color="#000000"/>
         </div>
       );
    }

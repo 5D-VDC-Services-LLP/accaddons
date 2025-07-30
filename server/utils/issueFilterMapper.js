@@ -2,6 +2,7 @@ const dayjs = require('dayjs');
 
 function mapWorkflowFiltersToIssueAPI(filters = []) {
   const params = {};
+  let assignedToList = [];
 
   for (const filter of filters) {
     const { filterBy, attribute } = filter;
@@ -25,25 +26,27 @@ function mapWorkflowFiltersToIssueAPI(filters = []) {
 
       case 'Issue Types':
         if (Array.isArray(attribute)) {
-          params['filter[issueTypeId]'] = attribute.join(',');
-        }
-        break;
-
-      case 'Root Cause Categories':
-        if (Array.isArray(attribute)) {
-          params['filter[rootCauseId]'] = attribute.join(',');
+          params['filter[issueSubtypeId]'] = attribute.join(',');
         }
         break;
 
       case 'Assigned To User':
+      case 'Assigned To Role':
+      case 'Assigned To Company':
         if (Array.isArray(attribute)) {
-          params['filter[assignedTo]'] = attribute.join(',');
+          assignedToList.push(...attribute);
         }
         break;
 
       default:
         console.warn(`[IssueFilterMapper] Unhandled filter: ${filterBy}`);
     }
+  }
+
+  if (assignedToList.length > 0) {
+    // Deduplicate in case the same ID appears under multiple types
+    const uniqueAssignedTo = [...new Set(assignedToList)];
+    params['filter[assignedTo]'] = uniqueAssignedTo.join(',');
   }
 
   return params;
