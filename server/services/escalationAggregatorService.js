@@ -42,6 +42,7 @@ async function runEscalationAggregation(accessToken) {
               aggregate: {},  // NEW STRUCTURE
               channels: new Set(wf.channels),
               tenant: tenantName,
+              mongoUri: mongodb_uri,
               date: new Date().toISOString().slice(0, 10)
             });
           }
@@ -78,7 +79,7 @@ async function runEscalationAggregation(accessToken) {
       console.warn(`❌ DB Error for ${email}:`, err.message);
     }
 
-    const templateType ='single';
+    const templateType ='account_level_notification'; // Adjust as needed
 
     await saveEscalationAggregate({
       email: user.email,
@@ -88,6 +89,7 @@ async function runEscalationAggregation(accessToken) {
       channels: [...user.channels],
       templateType,
       tenant: user.tenant,
+      mongoUri: user.mongoUri,
       date: user.date,
       sent: false,
       failed: false,

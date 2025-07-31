@@ -22,7 +22,7 @@ async function getItemIds(workflow, accessToken) {
     });
 
     const results = response.data.results || [];
-    return results.map(issue => issue.id);  // Return just the IDs
+    return results.map(issue => issue.id);
   } catch (err) {
     console.error(`[AUTODESK] Failed to query issues for workflow ${workflow.display_id}`);
     console.error(err?.response?.data || err.message);
@@ -30,4 +30,31 @@ async function getItemIds(workflow, accessToken) {
   }
 }
 
-module.exports = { getItemIds };
+const getIssueDetails = async (projectId, issueIds, accessToken) => {
+  try{
+  const url = `https://developer.api.autodesk.com/construction/issues/v1/projects/${projectId}/issues`;
+  const params = { 'filter[id]':issueIds, fields: 'displayId,createdAt,dueDate' };
+
+  const response = await axios.get(url, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            params: params
+        });
+  return response.data.results || [];
+  } catch (error) {
+    console.error(`Error fetching issue details for project ${projectId}, issue ${issueIds}:`, error.message);
+    if (error.response) {
+        console.error('Autodesk API response error:', error.response.data);
+        throw new CustomError(`Failed to fetch issue details from Autodesk API: ${error.response.status} - ${error.response.data.message || 'Unknown error'}`, error.response.status);
+    } else if (error.request) {
+        console.error('No response received from Autodesk API.');
+        throw new CustomError('No response received from Autodesk API.', 500);
+    } else {
+        throw new CustomError(`Error setting up request to Autodesk API: ${error.message}`, 500);
+    }
+}
+};
+
+module.exports = { getItemIds, getIssueDetails };

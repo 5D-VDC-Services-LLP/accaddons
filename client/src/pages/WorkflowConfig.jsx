@@ -79,6 +79,7 @@ const WorkflowConfig = () => {
 
           // Populate filters
           setFilters(data.filters || []);
+          console.log(data.filters);
 
           // Set active states based on whether escalation targets exist
           setIsUserActive(data.escalate_to?.users?.length > 0);
@@ -202,10 +203,8 @@ const WorkflowConfig = () => {
         console.log(`Fetched filters for module "${moduleType}":`, data.data);
         setModuleFilters(data?.data || {}); // Ensure it's an object
 
-        // Initialize filters if in create mode or if filters are empty in edit mode
-        // This logic should only run if workflow_id is NOT present (create mode)
-        // OR if workflow_id IS present AND editingWorkflowData.filters is empty/null
-        if (!workflow_id || (workflow_id && (!editingWorkflowData || editingWorkflowData.filters?.length === 0))) {
+        // Initialize filters ONLY if in create mode (no workflow_id)
+        if (!workflow_id) { // MODIFIED LINE: Changed condition here
           let firstFilterBy = null;
           let defaultAttribute = '';
           const currentModuleFilters = data?.data || {};

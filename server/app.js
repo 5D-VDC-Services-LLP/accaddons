@@ -16,6 +16,7 @@ const escalationRoutes = require('./routes/escalationRoutes'); // NEW: Import ne
 const accRoutes = require('./routes/accRoutes');
 // const { scheduleEscalationSender } = require('./cron/sendEscalationCron');
 const { scheduleAggregationCron } = require('./services/escalationAggregatorService');
+const { schedulePDFCron } = require('./services/pdfService');
 
 const app = express();
 
@@ -53,6 +54,8 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api/email', require('./routes/emailRoutes')); // NEW: Import email routes TENTATIVE
 
+app.use('/api/pdf', require('./routes/pdfRoutes')); // NEW: Import email routes TENTATIVE
+
 app.get('/api/debug/jwt', (req, res) => {
   const token = req.cookies.jwt;
   res.json({ jwt: token });
@@ -82,11 +85,12 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-const AUTODESK_ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlZiakZvUzhQU3lYODQyMV95dndvRUdRdFJEa19SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiLCJhY2NvdW50OnJlYWQiXSwiY2xpZW50X2lkIjoiREFJRTV1OVJvU3B1bjFSZ0dHblA1TGVGeVBucXhzVVoiLCJpc3MiOiJodHRwczovL2RldmVsb3Blci5hcGkuYXV0b2Rlc2suY29tIiwiYXVkIjoiaHR0cHM6Ly9hdXRvZGVzay5jb20iLCJqdGkiOiJsRFZHNnAyaUs5a0ZQTGRaR2RUYml1Q0JuZXpjS0lkeklCUFZSdEFLT1pEcTJUVVhXbDlhU0M5dG82eXNMV2I2IiwidXNlcmlkIjoiN0xOMlFKNVpRRVdDQjcyQyIsImV4cCI6MTc1Mzg2Mjg4OX0.hyOslIaSduHORq6dBTEa2uhoNWDQy33-XN_Z-YkEZVwYoyEKHE3QWV70xlIiuwIEQu5_CcHtJNTU_9z8CjLxUYv8IHGEWfusE_0350lqdRUZMNlRXsAOhJ5-zKrXz0CVbxRkWvzy-mamh1rEWKj-OIkJMyLdM6caeWBNf2_fC1xO-79bKC1hY-ODXB4Q3qNzmgHXehFkBiasl2nyi6NhcE-hAKeo-ASOBO-Tk4T0krNMgmJ-hDu6H3YHI5DmXp0GIdnujpxgBJrgTluU_zDtafliPslOQA9NS0Xn3vJ4oGh8yb5uhUG8Byur6qdpmp5B-K3UL0BuGPazYz1Nt3qDnA"
+const AUTODESK_ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6IlZiakZvUzhQU3lYODQyMV95dndvRUdRdFJEa19SUzI1NiIsInBpLmF0bSI6ImFzc2MifQ.eyJzY29wZSI6WyJkYXRhOnJlYWQiLCJhY2NvdW50OnJlYWQiXSwiY2xpZW50X2lkIjoiREFJRTV1OVJvU3B1bjFSZ0dHblA1TGVGeVBucXhzVVoiLCJpc3MiOiJodHRwczovL2RldmVsb3Blci5hcGkuYXV0b2Rlc2suY29tIiwiYXVkIjoiaHR0cHM6Ly9hdXRvZGVzay5jb20iLCJqdGkiOiJmRDVoZFI1OEFCQlRGdW1NQlprTjlLSkUxV3VhVjVBcnZTYWEzNk5taEU5WmhURUY5VFIwNkVhQ3VhRFgzRXRBIiwidXNlcmlkIjoiN0xOMlFKNVpRRVdDQjcyQyIsImV4cCI6MTc1Mzk0Njg3OH0.Iqni4ajMOQoTCdwuAjuTPUkay0haOfpwYW6Z2GKd8ecrlzEqcwjhiCQ644FQO6BPTn1PBrQhyggXdiMHCrCCMAAsUwLZrgSOwptp_FwJf3HZCP0mQVB7KpzcVQmJC7tkmlCwwGCdHlRiW3M1n9U3gzurjwgHNB-MXO_YfwSw4tBA63JbAksq20K8F3dw8SbjXGXPTREHx18NRIHKtnCD1dNqRhNMmz-X9VvmT5EC3J9259xLvLJf2f2vWHLY7lw0xNWGCw7WEmsXvyHT5a3t0g5VnyP3dR9hxrenYySPRI6wEElVptj93c7TqbJFvxmTdE9XYlEXzinsOugO8M-d1A"
 
 // Start CRON Scheduler (only if not in test environment)
 if (process.env.NODE_ENV !== 'test') {
-  scheduleAggregationCron(AUTODESK_ACCESS_TOKEN); // Replace with actual token
+  // scheduleAggregationCron(AUTODESK_ACCESS_TOKEN); // Replace with actual token
+  // schedulePDFCron(AUTODESK_ACCESS_TOKEN)
   // scheduleEscalationSender();
 }
 

@@ -4,6 +4,7 @@ const db = require('../db/postgres');
 const CustomError = require('../utils/customError');
 const { sendEscalationMessage } = require('../services/escalationService');
 const workflowService = require('../services/workflowService')
+const escalationAggregatorService = require('../services/escalationAggregatorService');
 /**
  * Triggers escalation for a specific workflow by ID.
  * Retrieves target users and sends WhatsApp messages.
@@ -74,6 +75,16 @@ const triggerEscalation = async (req, res, next) => {
   }
 };
 
+const getAllAggregatedIssueDetails = async (req, res, next) => {
+    try {
+        const allIssues = await escalationAggregatorService.getAllIssuesFromAggregates();
+        res.status(200).json(allIssues);
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
   triggerEscalation,
+  getAllAggregatedIssueDetails,
 };
