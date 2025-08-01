@@ -68,8 +68,7 @@ export const StickyScroll = ({ content, contentClassName }) => {
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
         <div
-          style={{ background: backgroundGradient }}
-          className={`h-72 w-full max-w-lg mx-8 rounded-xl bg-white overflow-hidden shadow-2xl ${
+          className={`h-[36rem] w-full max-w-4xl mx-8 rounded-xl bg-white overflow-hidden ${
             contentClassName || ""
           }`}
         >
@@ -117,10 +116,6 @@ export const StickyScroll = ({ content, contentClassName }) => {
               >
                 {item.description}
               </motion.p>
-              {/* Debug info */}
-              <div className="mt-4 text-sm text-gray-500">
-                Section {index + 1} {activeCard === index ? '(ACTIVE)' : ''}
-              </div>
             </div>
           </div>
         ))}

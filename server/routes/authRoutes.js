@@ -50,9 +50,19 @@ router.get('/initial-projects', authMiddleware.authenticateJWT, authController.g
  * @description Simple JWT validity check endpoint
  * @access Protected
  */
-router.get('/check', authMiddleware.authenticateJWT, (req, res) => {
-  res.status(200).json({ authenticated: true, user: req.user });
+// ...existing code...
+router.get('/check', authMiddleware.authenticateJWT, async (req, res) => {
+  // Fetch is_admin from DB if not already on req.user
+  let isAdmin = req.user?.is_admin;
+  if (typeof isAdmin === 'undefined') {
+    // Fetch from DB if needed
+    const userService = require('../services/userService');
+    const user = await userService.getUserByAutodeskId(req.user.autodeskId, req.companyConfig?.subdomain);
+    isAdmin = user?.is_admin || false;
+  }
+  res.status(200).json({ authenticated: true, user: { ...req.user, is_admin: isAdmin } });
 });
+// ...existing code...
 
 /**
  * @route POST /auth/verify-otp

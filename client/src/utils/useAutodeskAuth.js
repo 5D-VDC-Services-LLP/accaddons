@@ -6,6 +6,7 @@ import { getBackendUrl } from '../utils/urlUtils';
 export const useAutodeskAuth = () => {
     const [authStatus, setAuthStatus] = useState('idle');
     const [errorMsg, setErrorMsg] = useState('');
+    const [user, setUser] = useState(null);
     const navigate = useNavigate();
     const { setProjects } = useProjectContext();
 
@@ -33,11 +34,20 @@ export const useAutodeskAuth = () => {
             });
             if (!response.ok) throw new Error('Not authenticated');
             const data = await response.json();
+
+            setUser(data.user || null);
+
+            if (data.user && data.user.is_admin === false) {
+            // Redirect to beta/thank you page
+            navigate('/beta', { replace: true });
+            setErrorMsg('The program is currently in beta. Thank you for using our service.');
+            return false;
+        }
             return data.authenticated === true;
         } catch {
             return false;
         }
-    }, [backendBaseUrl]);
+    }, [backendBaseUrl, navigate]);
 
     // Centralized navigation function for workflows with project ID
     const navigateToWorkflowsWithProject = useCallback((projects) => {
@@ -221,5 +231,6 @@ export const useAutodeskAuth = () => {
         errorMsg,
         login,
         currentSubdomain,
-    }), [authStatus, errorMsg, login, currentSubdomain]);
+        user,
+    }), [authStatus, errorMsg, login, currentSubdomain, user]);
 };

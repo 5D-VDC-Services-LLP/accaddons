@@ -13,6 +13,7 @@ import WorkflowConfig from './pages/WorkflowConfig'
 import NotificationConfig from './pages/NotificationConfig'
 import EditWorkflowDispatcher from './pages/EditWorkflowDispatcher';
 import NotFound from './pages/NotFound'
+import Beta from './pages/Beta'
 
 
 
@@ -35,11 +36,13 @@ const AppContent = () => {
           <Route path="/" element={<RootComponent />} />
           <Route path="/company-grid" element={<CompanyGrid />} />
           <Route path="/verify-phone" element={<VerifyPhone />}/>
+
+          <Route path="/beta" element={<Beta />} />
           {/* Protected routes wrapped with context */}
           <Route
             path="/workflows"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowNonAdmin={false} redirectNonAdminTo='/beta'>
                 <Dashboard/>
               </ProtectedRoute>
             }

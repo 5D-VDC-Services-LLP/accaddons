@@ -57,4 +57,30 @@ const getIssueDetails = async (projectId, issueIds, accessToken) => {
 }
 };
 
-module.exports = { getItemIds, getIssueDetails };
+const getProjectName =async (accessToken, projectId) => {
+  try {
+    const url = `https://developer.api.autodesk.com/construction/admin/v1/projects/${projectId}`;
+    const params = {fields: 'name'};
+    const response = await axios.get(url, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            params: params
+        });
+    return response.data.name || '';
+  } catch (error) {
+    console.error(`Error fetching project name for projectID: ${projectId}`)
+    if (error.response) {
+        console.error('Autodesk API response error:', error.response.data);
+        throw new CustomError(`Failed to fetch issue details from Autodesk API: ${error.response.status} - ${error.response.data.message || 'Unknown error'}`, error.response.status);
+    } else if (error.request) {
+        console.error('No response received from Autodesk API.');
+        throw new CustomError('No response received from Autodesk API.', 500);
+    } else {
+        throw new CustomError(`Error setting up request to Autodesk API: ${error.message}`, 500);
+    }
+  }
+}
+
+module.exports = { getItemIds, getIssueDetails, getProjectName };

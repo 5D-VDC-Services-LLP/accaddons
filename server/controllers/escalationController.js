@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const db = require('../db/postgres');
 const CustomError = require('../utils/customError');
-const { sendEscalationMessage } = require('../services/escalationService');
+const { sendEscalationMessage } = require('../services/escalationWhatsappService');
 const workflowService = require('../services/workflowService')
 const escalationAggregatorService = require('../services/escalationAggregatorService');
 /**

@@ -4,8 +4,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
 import { useAutodeskAuth } from '../utils/useAutodeskAuth'; // Import your specific Autodesk auth hook
 
-const ProtectedRoute = ({ children }) => {
-  const { loading, isAuthenticated, checkedOnce, checkAuth } = useAuth(); // General auth state
+const ProtectedRoute = ({ children, allowNonAdmin = false, redirectNonAdminTo = '/beta' }) => {
+  const { loading, isAuthenticated, checkedOnce, checkAuth, user } = useAuth(); // General auth state
   const { authStatus } = useAutodeskAuth(); // Get the specific Autodesk auth status
   const location = useLocation();
 
@@ -46,6 +46,10 @@ const ProtectedRoute = ({ children }) => {
   // If not authenticated and not in a special flow, redirect to login
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
+  }
+
+  if (!allowNonAdmin && user && !user.is_admin) {
+    return <Navigate to={redirectNonAdminTo} replace />;
   }
 
   // If authenticated (and not in pendingPhone flow), render children

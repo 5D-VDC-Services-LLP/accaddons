@@ -128,13 +128,27 @@ const autodeskCallback = async (req, res, next) => {
     console.log(`Autodesk APS tokens saved/updated for user ${autodeskId} in tenant MongoDB.`);
 
     // 4. Store/Update user in PostgreSQL (WITHOUT APS tokens)
-    const companyId = req.companyConfig.id;
     const firstName = autodeskUserProfile.firstName;
     const lastName = autodeskUserProfile.lastName;
     const emailId = autodeskUserProfile.emailId;
-    const companySubdomain = req.companyConfig.subdomain;
 
-    const user = await userService.upsertUser(autodeskId, firstName, lastName, emailId); // Assume this returns full user
+    const host = req.headers.host; // e.g., 'tenant1.yourdomain.com:8080' or 'localhost:8080'
+    const hostname = host.split(':')[0]; // Remove port if present
+
+    const mainDomainParts = config.mainDomain.split('.');
+    const hostnameParts = hostname.split('.');
+
+    let subdomain = '';
+
+    if (hostnameParts.length > mainDomainParts.length) {
+      subdomain = hostnameParts.slice(0, hostnameParts.length - mainDomainParts.length).join('.');
+    } else if (hostnameParts.length === mainDomainParts.length && hostname === config.mainDomain) {
+      subdomain = '';
+    } else {
+      subdomain = '';
+    }
+    
+    const user = await userService.upsertUser(autodeskId, firstName, lastName, emailId, subdomain); // Assume this returns full user
     if (!user.phone_number || !user.is_otp_verified) {
       console.log(`User ${autodeskId} has no phone number or is not OTP verified.`);
 
@@ -143,7 +157,7 @@ const autodeskCallback = async (req, res, next) => {
         firstName,
         lastName,
         emailId,
-        tenant: req.companyConfig.subdomain,
+        // tenant: subdomain,
         redirectTo: originalFrontendRedirectUrl, // Store the original redirect URL here
       };
         const parsedUrl = new URL(originalFrontendRedirectUrl);
@@ -174,7 +188,9 @@ const autodeskCallback = async (req, res, next) => {
       autodeskId: autodeskId,
       firstName: firstName,
       lastName: lastName,
-      emailId: emailId
+      emailId: emailId,
+      tenant: subdomain,
+      isAdmin: user.is_admin,
       // companyId: companyId,
       // Add other claims as needed, e.g., roles, permissions
     });

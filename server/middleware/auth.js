@@ -1,6 +1,7 @@
 // src/middleware/auth.js
 const jwt = require('../utils/jwt');
 const CustomError = require('../utils/customError');
+const config = require('../config');
 const userService = require('../services/userService'); // Assuming this service exists and works with autodeskId
 
 /**
@@ -35,9 +36,30 @@ const authenticateJWT = async (req, res, next) => {
       throw new CustomError('Invalid token payload: Autodesk ID missing.', 401);
     }
 
+    const host = req.headers.host; // e.g., 'tenant1.yourdomain.com:8080' or 'localhost:8080'
+    const hostname = host.split(':')[0]; // Remove port if present
+
+    const mainDomainParts = config.mainDomain.split('.');
+    const hostnameParts = hostname.split('.');
+
+    let subdomain = '';
+
+    if (hostnameParts.length > mainDomainParts.length) {
+      subdomain = hostnameParts.slice(0, hostnameParts.length - mainDomainParts.length).join('.');
+    } else if (hostnameParts.length === mainDomainParts.length && hostname === config.mainDomain) {
+      subdomain = '';
+    } else {
+      subdomain = '';
+    }
+
+    if (decoded.tenant !== subdomain) {
+      console.warn(`Tenant mismatch: JWT says '${decoded.tenant}', request is for '${subdomain}'`);
+      throw new CustomError('Tenant mismatch in authentication token. Please log in again.', 403);
+    }
+
     // Optionally, fetch full user details from your central PostgreSQL DB using the autodeskId
     // This step confirms that the autodeskId in the JWT corresponds to an existing user in your system.
-    const user = await userService.getUserByAutodeskId(decoded.autodeskId);
+    const user = await userService.getUserByAutodeskId(decoded.autodeskId, subdomain);
 
     if (!user) {
       // If the user's autodeskId from the JWT isn't found in your central user database
